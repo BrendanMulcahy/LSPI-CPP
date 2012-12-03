@@ -1,3 +1,7 @@
+/**
+ * The base class for AI Agents. Represents a random agent.
+ */
+
 #ifndef AGENT_H
 #define AGENT_H
 
@@ -6,6 +10,10 @@
 class Agent
 {
 	public:
+		/**
+		 * Selects an action based on the given angle, x, and angular velocity, v.
+		 * By default, selects an action at random.
+		 */
 		int getAction(double x, double v)
 		{
 			int choice = rand() % 3;
@@ -20,6 +28,10 @@ class Agent
 			}
 		}
 
+		/**
+		 * Notifies the agent of the reward for its actions.
+		 * By default, does nothing.
+		 */
 		void notify(double reward)
 		{
 		}

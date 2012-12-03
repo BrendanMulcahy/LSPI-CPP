@@ -8,9 +8,19 @@
 using namespace arma;
 using namespace std;
 
-// A sample of data collected from the target environment
-// must be passed to the constructor.
-// Each sample should be a tuple (x, v, a, r, x', v')
+/**
+ * To create an LSPI Agent, a discount factor and a large number of sample data points are required. More sample should result in a better policy.
+ * The samples should come from data taken from an agent performing at random, or a previous iteration of an LSPI Agent.
+ *
+ * Each sample in the vector should be of the format [x, v, a, r, x', v', t]
+ * -x is the angle
+ * -v is the angular velocity
+ * -a is action selected
+ * -r is the reward received after executing the action
+ * -x' is the angle after executing the action
+ * -v' is the angular velocity after executing the action
+ * -t is 1 if the state after executing is terminal, 0 otherwise
+ */
 LspiAgent::LspiAgent(vector<array<double, 7>> samples, double disc)
 {
 	discount = disc;
@@ -27,6 +37,10 @@ LspiAgent::LspiAgent(vector<array<double, 7>> samples, double disc)
 	w = policy;
 }
 
+/**
+ * After creation, the LSPI Agent's policy is used to generate a functional value at a given angle and velocity. This functional value defines the action
+ * the agent intends to take.
+ */
 int LspiAgent::getAction(double x, double v)
 {
 	int action = -9999;
@@ -46,7 +60,9 @@ int LspiAgent::getAction(double x, double v)
 	return action;
 }
 		
-// Each sample is (x, v, a, r, x', v')
+/**
+ * Given a set of samples, performs a single update step on the current agent's policy.
+ */
 vec LspiAgent::lstdq(vector<array<double, 7>> samples)
 {
 	mat B = 0.1*eye(BASIS_SIZE*NUM_ACTIONS, BASIS_SIZE*NUM_ACTIONS);
@@ -71,6 +87,10 @@ vec LspiAgent::lstdq(vector<array<double, 7>> samples)
 	return B*b;
 }
 
+/**
+ * Calculates and returns the magnitude of the given vector.
+ * This is calculated by taking the  square root of the sum of squares for the vector components.
+ */
 double LspiAgent::magnitude(vec vector)
 {
 	double mag = 0;
@@ -83,7 +103,11 @@ double LspiAgent::magnitude(vec vector)
 			
 	return sqrt(mag);
 }
-	
+
+/**
+ * Returns the policy function weights for the given angle, velocity, and action.
+ * These weights can be used to compute the estimated fitness of the given action.
+ */
 vec LspiAgent::basis_function(double x, double v, int action)
 {
 	vec phi = zeros<vec>(BASIS_SIZE*NUM_ACTIONS);

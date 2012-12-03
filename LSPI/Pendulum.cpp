@@ -2,13 +2,18 @@
 #include "Pendulum.h"
 #include "constants.h"
 
+/**
+ * Constructor for objects of class Pendulum. Always starts with a random angle and angular velocity close to vertical.
+ */
 Pendulum::Pendulum()
 {
 	// Initalize to a random position and velocity within a small boundary.
 	x = ((double)rand()/(double)RAND_MAX)*((10.0*M_PI)/180.0) - ((5.0*M_PI)/180.0);
 	v = ((double)rand()/(double)RAND_MAX)*((10.0*M_PI)/180.0) - ((5.0*M_PI)/180.0);
 }
-
+/**
+ * Returns true if the pendulum is horizontal, false otherwise.
+ */
 bool Pendulum::isHorizontal()
 {
 	if(abs(x) - M_PI/2.0 >= 0)
@@ -16,6 +21,10 @@ bool Pendulum::isHorizontal()
 	return false;
 }
 
+/**
+ * Estimates the state change of the pendulum after the period of time, dt, has passed.
+ * The u parameter represents the action, either NF_OPT, LF_OPT, or RF_OPT.
+ */
 void Pendulum::update(double dt, double u)
 {
 	// figure out what force to use

@@ -1,5 +1,9 @@
-// LSPI_CPP.cpp : Defines the entry point for the console application.
-//
+/**
+ * LSPI_CPP.cpp : Defines the entry point for the console application.
+ *
+ * Executes a series of tests of different Agents trying to solve the inverted pendulum problem.
+ * Tracks the performance of each type of agent across multiple trials and prints the results.
+ */
 
 #include "stdafx.h"
 #include "Agent.h"
@@ -20,6 +24,9 @@ using namespace std;
 #define NUM_SAMPLE_TRIALS 10000
 #define DISCOUNT 0.5f
 
+/**
+ * Calculates the time between the two clock events. Currently is not working as expected.
+ */
 double diffclock(clock_t clock1,clock_t clock2)
 {
 	double diffticks= clock2-clock1;
@@ -131,6 +138,7 @@ int _tmain(int argc, _TCHAR* argv[])
 		printf("No-Op Agent: %f\n", (double)(noop_agent_life*DT_CONST)/NUM_TRIALS);
 		printf("LSPI Agent: %f\n", (double)(lspi_agent_life*DT_CONST)/NUM_TRIALS);
 
+	// Wait so we can get the results
 	getch();
 
 	return 0;
