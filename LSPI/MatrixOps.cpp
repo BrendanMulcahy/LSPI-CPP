@@ -7,6 +7,8 @@
 #include <cstdlib>
 #include <cmath>
 
+int MatrixOps::errorCode = 0;
+
 typedef struct 
 {
 	double *matrix;
