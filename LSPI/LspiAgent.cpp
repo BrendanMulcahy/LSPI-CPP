@@ -21,14 +21,14 @@ using namespace std;
  * -v' is the angular velocity after executing the action
  * -t is 1 if the state after executing is terminal, 0 otherwise
  */
-LspiAgent::LspiAgent(vector<array<double, 7>> samples, double disc)
+LspiAgent::LspiAgent(std::vector<array<double, 7>> samples, double disc)
 {
 	discount = disc;
-	w = zeros<vec>(BASIS_SIZE*NUM_ACTIONS);
+	w = MatrixOps::vec_zeros(BASIS_SIZE*NUM_ACTIONS);
 
 	// Loop until policy converges
-	vec policy = lstdq(samples);
-	while(magnitude(w - policy) > epsilon_const)
+	MatrixOps::vector policy = lstdq(samples);
+	while(MatrixOps::mag_diff_vec(w, policy) > epsilon_const)
 	{
 		w = policy;
 		policy = lstdq(samples);
@@ -48,7 +48,7 @@ int LspiAgent::getAction(double x, double v)
 	int options[3] = {RF_OPT, NF_OPT, LF_OPT};
 	for(int i = 0; i < 3; i++)
 	{
-		vec params = basis_function(x, v, options[i]);
+		MatrixOps::vector params = basis_function(x, v, options[i]);
 		double q = dot(params, w);
 		if(q > max)
 		{
@@ -63,20 +63,20 @@ int LspiAgent::getAction(double x, double v)
 /**
  * Given a set of samples, performs a single update step on the current agent's policy.
  */
-vec LspiAgent::lstdq(vector<array<double, 7>> samples)
+MatrixOps::vector LspiAgent::lstdq(std::vector<array<double, 7>> samples)
 {
-	mat B = 0.1*eye(BASIS_SIZE*NUM_ACTIONS, BASIS_SIZE*NUM_ACTIONS);
-	vec b = zeros(BASIS_SIZE*NUM_ACTIONS);
+	MatrixOps::matrix B = 0.1*eye(BASIS_SIZE*NUM_ACTIONS, BASIS_SIZE*NUM_ACTIONS);
+	MatrixOps::vector b = MatrixOps::vec_zeros(BASIS_SIZE*NUM_ACTIONS);
 	for(int i = 0; i < samples.size(); i++)
 	{
 		// Get the basis functions
-		vec phi = basis_function(samples[i][0], samples[i][1], samples[i][2]);
+		MatrixOps::vector phi = basis_function(samples[i][0], samples[i][1], samples[i][2]);
 		int next_action = getAction(samples[i][4], samples[i][5]);
-		vec phi_prime = basis_function(samples[i][4], samples[i][5], next_action);
+		MatrixOps::vector phi_prime = basis_function(samples[i][4], samples[i][5], next_action);
 
 		// Break the calculation into smaller parts
-		vec temp = phi - discount*phi_prime;
-		mat num = B*phi*(temp.t()*B);
+		MatrixOps::vector temp = phi - discount*phi_prime;
+		MatrixOps::matrix num = B*phi*(temp.t()*B);
 		double denom = 1.0 + dot((temp.t()*B), phi);
 		B = B - num/denom;
 
@@ -88,29 +88,12 @@ vec LspiAgent::lstdq(vector<array<double, 7>> samples)
 }
 
 /**
- * Calculates and returns the magnitude of the given vector.
- * This is calculated by taking the  square root of the sum of squares for the vector components.
- */
-double LspiAgent::magnitude(vec vector)
-{
-	double mag = 0;
-	vec::const_iterator begin = vector.begin();
-	vec::const_iterator end = vector.end();
-	for(vec::const_iterator it = begin; it != end; it++)
-	{
-		mag += (*it) * (*it);
-	}
-			
-	return sqrt(mag);
-}
-
-/**
  * Returns the policy function weights for the given angle, velocity, and action.
  * These weights can be used to compute the estimated fitness of the given action.
  */
-vec LspiAgent::basis_function(double x, double v, int action)
+MatrixOps::vector LspiAgent::basis_function(double x, double v, int action)
 {
-	vec phi = zeros<vec>(BASIS_SIZE*NUM_ACTIONS);
+	MatrixOps::vector phi = MatrixOps::vec_zeros(BASIS_SIZE*NUM_ACTIONS);
 
 	// If we're horizontal then the basis function is all 0s
 	if (fabs(x) - M_PI/(2.0) >= 0)
@@ -121,7 +104,7 @@ vec LspiAgent::basis_function(double x, double v, int action)
 	// Now populate the basis function for this state action pair
 	// Note that each entry except for the first is a gaussian.
 	int i = BASIS_SIZE * (action);
-	phi[i] = 1.0;
+	MatrixOps::vec_set(phi, i, 1.0);
 	i += 1;
 	double value = M_PI/2.0;
 	for(double j = -value; j <= value; j += (value/((BASIS_SIZE-1)/6)))
@@ -129,7 +112,7 @@ vec LspiAgent::basis_function(double x, double v, int action)
 		for(double k = -1; k <= 1; k += 1)
 		{
 			double dist = (x - j)*(x - j) + (v - k)*(v - k);
-			phi[i] = exp(-dist/(2*SIGMA_2));
+			MatrixOps::vec_set(phi, i, exp(-dist/(2*SIGMA_2)));
 			i += 1;
 		}
 	}

@@ -4,9 +4,9 @@
 
 #include "stdafx.h"
 #include "Agent.h"
-#include "armadillo"
 #include <vector>
 #include <array>
+#include "MatrixOps.h"
 
 class LspiAgent: public Agent
 {
@@ -34,22 +34,16 @@ class LspiAgent: public Agent
 
 	private:
 		double discount;
-		arma::vec w;
+		MatrixOps::vector w;
 		
 		/**
 		 * Given a set of samples, performs a single update step on the current agent's policy.
 		 */
-		arma::vec lstdq(std::vector<std::array<double, 7>> samples);
-
-		/**
-		 * Calculates and returns the magnitude of the given vector.
-		 * This is calculated by taking the  square root of the sum of squares for the vector components.
-		 */
-		double magnitude(arma::vec vector);
+		MatrixOps::vector lstdq(std::vector<std::array<double, 7>> samples);
 	
 		/**
 		 * Returns the policy function weights for the given angle, velocity, and action.
 		 * These weights can be used to compute the estimated fitness of the given action.
 		 */
-		arma::vec basis_function(double x, double v, int action);
+		MatrixOps::vector basis_function(double x, double v, int action);
 };

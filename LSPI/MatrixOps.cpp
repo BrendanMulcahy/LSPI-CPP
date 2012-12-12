@@ -10,23 +10,13 @@
 #include <cuda_runtime.h>
 
 int MatrixOps::errorCode = 0;
-int devID = 0;
-cublasHandle_t handle;
+int MatrixOps::devID = 0;
+cublasHandle_t MatrixOps::handle;
 
-typedef struct 
-{
-	double *matrix;
-	int columns;
-	int rows;
-} matrix;
-
-typedef struct 
-{
-	double *vector;
-	int size;
-} vector;
-
-bool initializeCUDA()
+/**
+* Initializes the CUDA device.
+*/
+bool MatrixOps::initializeCUDA()
 {
 	// By default, we use device 0, otherwise we override the device ID based on what is provided at the command line
     cudaError_t error;
@@ -62,7 +52,10 @@ bool initializeCUDA()
 	return true;
 }
 
-bool initializeCUBLAS()
+/**
+* Initializes the cublas handle.
+*/
+bool MatrixOps::initializeCUBLAS()
 {
 	cublasStatus_t ret;
 
@@ -77,7 +70,10 @@ bool initializeCUBLAS()
 	return true;
 }
 
-void destroy_context()
+/**
+* Cleans up the CUDA/CUBLAS context. Must be called to free resources after initializeCUDA/CUBLAS.
+*/
+void MatrixOps::destroy_context()
 {
 	cublasDestroy(handle);
 }
@@ -86,7 +82,7 @@ void destroy_context()
  * Sets the error code to -1 if the given (row, col) is out of bounds of mat.
  * May have this print out an error.
  */
-bool mat_in_bounds(matrix mat, int row, int col)
+bool MatrixOps::mat_in_bounds(matrix mat, int row, int col)
 {
 	if(row >= mat.rows || col >= mat.columns)
 	{
@@ -100,7 +96,7 @@ bool mat_in_bounds(matrix mat, int row, int col)
 /**
 * Sets the error code to -1 if the given x is out of bounds of vec.
 */
-bool vec_in_bounds(vector vec, int x)
+bool MatrixOps::vec_in_bounds(vector vec, int x)
 {
 	if(x >= vec.size)
 	{
@@ -115,7 +111,7 @@ bool vec_in_bounds(vector vec, int x)
 /**
  * Returns a pointer to a vector of doubles, all set to 0.0
  */
-vector vec_zeros(int size)
+MatrixOps::vector MatrixOps::vec_zeros(int size)
 {
 	vector vec;
 	vec.size = size;
@@ -131,7 +127,7 @@ vector vec_zeros(int size)
 /**
 * Returns a Rows by Columns matrix of zeros.
 */
-matrix mat_zeros(int rows, int columns)
+MatrixOps::matrix MatrixOps::mat_zeros(int rows, int columns)
 {
 	matrix mat;
 	mat.columns = columns;
@@ -144,7 +140,7 @@ matrix mat_zeros(int rows, int columns)
 /**
  * Returns a pointer representing a matrix square identity matrix.
  */
-matrix mat_eye(int size)
+MatrixOps::matrix MatrixOps::mat_eye(int size)
 {
 	matrix mat = mat_zeros(size, size);
 	for(int col = 0; col < mat.columns; col++)
@@ -164,7 +160,7 @@ matrix mat_eye(int size)
  *
  * Sets the errorCode to -1 if the item is out of range
  */
-double mat_get(matrix mat, int row, int col)
+double MatrixOps::mat_get(matrix mat, int row, int col)
 {
 	if(!mat_in_bounds(mat, row, col))
 	{
@@ -180,7 +176,7 @@ double mat_get(matrix mat, int row, int col)
  *
  * Sets the errorCode to -1 if the item is out of range
  */
-void mat_set(matrix mat, int row, int col, double val)
+void MatrixOps::mat_set(matrix mat, int row, int col, double val)
 {
 	if(!mat_in_bounds(mat, row, col))
 	{
@@ -196,7 +192,7 @@ void mat_set(matrix mat, int row, int col, double val)
  *
  * Sets the errorCode to -1 if the item is out of range
  */
-double vec_get(vector vec, int x)
+double MatrixOps::vec_get(vector vec, int x)
 {
 	if(!vec_in_bounds(vec, x))
 	{
@@ -212,7 +208,7 @@ double vec_get(vector vec, int x)
  *
  * Sets the errorCode to -1 if the item is out of range
  */
-void vec_set(vector vec, int x, double val)
+void MatrixOps::vec_set(vector vec, int x, double val)
 {
 	if(!vec_in_bounds(vec, x))
 	{
@@ -223,11 +219,14 @@ void vec_set(vector vec, int x, double val)
 	vec.vector[x] = val;
 }
 
-bool exec_cudaMalloc(double *d_ptr, size_t mem_size)
+/**
+* Wraps cuda malloc. Detects errors and reports true or false based on the result.
+*/
+bool MatrixOps::exec_cudaMalloc(double **d_ptr, size_t mem_size)
 {
 	cudaError_t error;
 
-	error = cudaMalloc(&d_ptr, mem_size);
+	error = cudaMalloc(d_ptr, mem_size);
 	if(error != cudaSuccess)
 	{
 		printf("cudaMalloc return error code %d, line(%d)\n", error, __LINE__);
@@ -237,39 +236,59 @@ bool exec_cudaMalloc(double *d_ptr, size_t mem_size)
 	return true;
 }
 
-bool exec_cudaMemcpy(double *dst, double *src, size_t size)
-{
-	cudaError_t error;
-
-	error = cudaMemcpy(dst, src, size, cudaMemcpyHostToDevice);
-	if(error != cudaSuccess)
-	{
-		printf("cudaMemcpy return error code %d, line(%d)\n", error, __LINE__);
-		return false;
-	}
-
-	return true;
-}
-
-bool exec_cublasSetMatrix(double *dst, matrix mat)
+/**
+* Wraps cublas set matrix. Detects errors and reports true or false based on the result.
+*/
+bool MatrixOps::exec_cublasSetMatrix(double *dst, matrix mat)
 {
 	cublasStatus_t status;
 
-	status = cublasSetMatrix(mat.rows, mat.columns, sizeof(double), mat.matrix, , dst, );
+	status = cublasSetMatrix(mat.rows, mat.columns, sizeof(double), mat.matrix, mat.rows, dst, mat.rows);
 	if(status != CUBLAS_STATUS_SUCCESS)
 	{
-		printf("cudaSetMatrix return error code %d, line (%d)\n", status, __LINE__);
+		printf("cublasSetMatrix return error code %d, line (%d)\n", status, __LINE__);
 		return false;
 	}
 
 	return true;
 }
 
-bool exec_cublasDgemm(matrix mat_A, matrix mat_B, matrix mat_C)
+/**
+* Wraps cublas D gemm. Detects errors and reports true or false based on the result.
+*/
+bool MatrixOps::exec_cublasDgemm(double *dmat_A, double *dmat_B, double *dmat_C, int m, int k, int n)
 {
 	cublasStatus_t status;
 
-	status = cublasDgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, mat_C.rows, mat_C.columns, mat_B.rows, 0.0, mat_
+	double alpha = 1.0;
+	double beta = 0.0;
+	status = cublasDgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, m, n, k, &alpha,
+						 dmat_A, m, dmat_B, k, &beta, dmat_C, m);
+	if(status != CUBLAS_STATUS_SUCCESS)
+	{
+		printf("cublasDgemm return error code %d, line (%d)\n", status, __LINE__);
+		return false;
+	}
+
+	return true;
+}
+
+/**
+* Wraps cublas get matrix. Detects errors and reports true or false based on the result.
+*/
+bool MatrixOps::exec_cublasGetMatrix(double *src, matrix mat)
+{
+	cublasStatus_t status;
+
+	status = cublasGetMatrix(mat.rows, mat.columns, sizeof(double), src, mat.rows, mat.matrix, mat.rows);
+	if(status != CUBLAS_STATUS_SUCCESS)
+	{
+		printf("cublasGetMatrix return error code %d, line (%d)\n", status, __LINE__);
+		return false;
+	}
+	MatrixOps::mat_print(mat);
+
+	return true;
 }
 
 /**
@@ -277,7 +296,7 @@ bool exec_cublasDgemm(matrix mat_A, matrix mat_B, matrix mat_C)
  * Sets the errorCode to -1 if an error is encountered.
  * Even if it errors you must call free.
  */
-matrix mult(matrix mat_A, matrix mat_B)
+MatrixOps::matrix MatrixOps::mult(matrix mat_A, matrix mat_B)
 {
 	matrix mat_result = mat_zeros(mat_A.rows, mat_B.columns);
 
@@ -298,18 +317,9 @@ matrix mult(matrix mat_A, matrix mat_B)
 
 	// Allocate device memory
 	double *dmat_A, *dmat_B, *dmat_result;
-	if(!(exec_cudaMalloc(dmat_A, size_A)
-		&& exec_cudaMalloc(dmat_B, size_B)
-		&& exec_cudaMalloc(dmat_result, size_result))
-	  )
-	{
-		MatrixOps::errorCode = -1;
-		return mat_result;
-	}
-
-	if(!(exec_cudaMemcpy(dmat_A, mat_A.matrix, size_A)
-		&& exec_cudaMemcpy(dmat_B, mat_B.matrix, size_B)
-		&& exec_cudaMemcpy(dmat_result, mat_result.matrix, size_result))
+	if(!(exec_cudaMalloc(&dmat_A, size_A)
+		&& exec_cudaMalloc(&dmat_B, size_B)
+		&& exec_cudaMalloc(&dmat_result, size_result))
 	  )
 	{
 		MatrixOps::errorCode = -1;
@@ -325,7 +335,15 @@ matrix mult(matrix mat_A, matrix mat_B)
 		return mat_result;
 	}
 
-	if(!(exec_cublasDgemm(mat_A, mat_B, mat_result))
+	// MULTIPLY
+	if(!(exec_cublasDgemm(dmat_A, dmat_B, dmat_result, mat_A.rows, mat_A.columns, mat_B.columns)))
+	{
+		MatrixOps::errorCode = -1;
+		return mat_result;
+	}
+
+	// Retrieve the results
+	if(!(exec_cublasGetMatrix(dmat_result, mat_result)))
 	{
 		MatrixOps::errorCode = -1;
 		return mat_result;
@@ -340,7 +358,7 @@ matrix mult(matrix mat_A, matrix mat_B)
  * Sets the errorCode to -1 if an error is encountered.
  * Even if it errors you must call free.
  */
-vector mult_vec(matrix mat, vector vec)
+MatrixOps::vector MatrixOps::mult_vec(matrix mat, vector vec)
 {
 	vector vec_result = vec_zeros(mat.rows);
 
@@ -365,7 +383,7 @@ vector mult_vec(matrix mat, vector vec)
  * Sets the errorCode to -1 if an error is encountered.
  * Even if it errors you must call free.
  */
-vector mult_vec(vector vec, matrix mat)
+MatrixOps::vector MatrixOps::mult_vec(vector vec, matrix mat)
 {
 	vector vec_result = vec_zeros(mat.columns);
 
@@ -389,7 +407,7 @@ vector mult_vec(vector vec, matrix mat)
  * Calculates and returns the magnitude of the given vector.
  * This is calculated by taking the  square root of the sum of squares for the vector components.
  */
-double mag_vec(vector vec)
+double MatrixOps::mag_vec(vector vec)
 {
 	double sum = 0.0;
 	for(int i = 0; i < vec.size; i++)
@@ -398,4 +416,36 @@ double mag_vec(vector vec)
 	}
 
 	return std::sqrt(sum);
+}
+
+/**
+* Calculates the magnitude of the difference between two vectors. Assumes both are the same size.
+* Calculates vec_a - vec_b.
+*/
+static double mag_diff_vec(MatrixOps::vector vec_a, MatrixOps::vector vec_b)
+{
+	double sum = 0.0;
+	for(int i = 0; i < vec_a.size; i++)
+	{
+		double temp = vec_a.vector[i] - vec_b.vector[i];
+		sum += temp*temp;
+	}
+
+	return std:sqrt(sum);
+}
+
+/**
+* Prints the size contents of the matrix (rows -> columns).
+*/
+void MatrixOps::mat_print(matrix mat)
+{
+	printf("%dx%d:\n", mat.rows, mat.columns);
+	for(int row = 0; row < mat.rows; row++)
+	{
+		for(int col = 0; col < mat.columns; col++)
+		{
+			printf("%f ", mat.matrix[col*mat.rows + row]);
+		}
+		printf("\n");
+	}
 }
