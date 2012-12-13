@@ -5,7 +5,6 @@
 #define BASIS_SIZE 10
 #define SIGMA_2 1
 
-using namespace arma;
 using namespace std;
 
 /**
@@ -49,7 +48,7 @@ int LspiAgent::getAction(double x, double v)
 	for(int i = 0; i < 3; i++)
 	{
 		MatrixOps::vector params = basis_function(x, v, options[i]);
-		double q = dot(params, w);
+		double q = MatrixOps::dot(params, w);
 		if(q > max)
 		{
 			action = options[i];
@@ -65,7 +64,8 @@ int LspiAgent::getAction(double x, double v)
  */
 MatrixOps::vector LspiAgent::lstdq(std::vector<array<double, 7>> samples)
 {
-	MatrixOps::matrix B = 0.1*eye(BASIS_SIZE*NUM_ACTIONS, BASIS_SIZE*NUM_ACTIONS);
+	MatrixOps::matrix B = MatrixOps::mat_eye(BASIS_SIZE*NUM_ACTIONS);
+	MatrixOps::mult_in_place(0.1, B);
 	MatrixOps::vector b = MatrixOps::vec_zeros(BASIS_SIZE*NUM_ACTIONS);
 	for(int i = 0; i < samples.size(); i++)
 	{
@@ -75,16 +75,33 @@ MatrixOps::vector LspiAgent::lstdq(std::vector<array<double, 7>> samples)
 		MatrixOps::vector phi_prime = basis_function(samples[i][4], samples[i][5], next_action);
 
 		// Break the calculation into smaller parts
-		MatrixOps::vector temp = phi - discount*phi_prime;
-		MatrixOps::matrix num = B*phi*(temp.t()*B);
-		double denom = 1.0 + dot((temp.t()*B), phi);
-		B = B - num/denom;
+		MatrixOps::mult_vec_in_place(discount, phi_prime);
+		MatrixOps::sub(phi, phi_prime, phi_prime);
+		MatrixOps::vector temp = MatrixOps::mult_vec(B, phi);
+		MatrixOps::vector temp2 = MatrixOps::mult_vec(phi_prime, B);
+		MatrixOps::matrix num = MatrixOps::mult(temp, temp2);
+
+		double denom = 1.0 + MatrixOps::dot(temp2, phi);
+		MatrixOps::mult_in_place(1.0/denom, num);
+		MatrixOps::sub(B, num, B);
 
 		// Update values
-		b = b + phi*samples[i][3];
+		MatrixOps::mult_vec_in_place(samples[i][3], phi);
+		MatrixOps::add(b, phi, b);
+
+		MatrixOps::free_vec(phi);
+		MatrixOps::free_vec(phi_prime);
+		MatrixOps::free_vec(temp);
+		MatrixOps::free_vec(temp2);
+		MatrixOps::free_mat(num);
 	}
-			
-	return B*b;
+	
+	MatrixOps::vector result = MatrixOps::mult_vec(B, b);
+
+	MatrixOps::free_mat(B);
+	MatrixOps::free_vec(b);
+
+	return result;
 }
 
 /**

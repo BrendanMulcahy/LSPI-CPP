@@ -78,6 +78,11 @@ class MatrixOps
 		static matrix mult(matrix mat_A, matrix mat_B);
 
 		/**
+		 * Multiplies in place every element of mat by alpha
+		 */
+		static void MatrixOps::mult_in_place(double alpha, MatrixOps::matrix mat);
+
+		/**
 		 * Computes the result of the vector-matrix operation of mat * vec.
 		 */
 		static vector mult_vec(matrix mat, vector vec);

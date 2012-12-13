@@ -349,6 +349,54 @@ MatrixOps::matrix MatrixOps::mult(matrix mat_A, matrix mat_B)
 		return mat_result;
 	}
 
+	cudaFree(dmat_A);
+	cudaFree(dmat_B);
+	cudaFree(dmat_result);
+
+	MatrixOps::errorCode = 0;
+	return mat_result;
+}
+
+/**
+ * Multiplies in place every element of mat by alpha
+ */
+void MatrixOps::mult_in_place(double beta, matrix mat)
+{
+	double *dmat;
+	size_t size = sizeof(double)*mat.rows*mat.columns;
+	if(!(exec_cudaMalloc(&dmat, size)))
+	{
+		MatrixOps::errorCode = -1;
+		return;
+	}
+
+	// Copy from host to device
+	if(!(exec_cublasSetMatrix(dmat, mat)))
+	{
+		MatrixOps::errorCode = -1;
+		return;
+	}
+
+	cublasStatus_t status;
+
+	double alpha = 0.0;
+	status = cublasDgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, mat.rows, mat.columns, mat.rows, &alpha,
+						 dmat, mat.rows, dmat, mat.columns, &beta, dmat, mat.rows);
+	if(status != CUBLAS_STATUS_SUCCESS)
+	{
+		printf("cublasDgemm return error code %d, line (%d)\n", status, __LINE__);
+		return;
+	}
+
+	// Retrieve the results
+	if(!(exec_cublasGetMatrix(dmat, mat)))
+	{
+		MatrixOps::errorCode = -1;
+		return mat_result;
+	}
+
+	cudaFree(dmat);
+
 	MatrixOps::errorCode = 0;
 	return mat_result;
 }
@@ -373,6 +421,8 @@ MatrixOps::vector MatrixOps::mult_vec(matrix mat, vector vec)
 	}
 
 	// INSERT MULTIPLY CODE HERE
+
+
 
 	MatrixOps::errorCode = 0;
 	return vec_result;
@@ -422,7 +472,7 @@ double MatrixOps::mag_vec(vector vec)
 * Calculates the magnitude of the difference between two vectors. Assumes both are the same size.
 * Calculates vec_a - vec_b.
 */
-static double mag_diff_vec(MatrixOps::vector vec_a, MatrixOps::vector vec_b)
+double MatrixOps::mag_diff_vec(vector vec_a, vector vec_b)
 {
 	double sum = 0.0;
 	for(int i = 0; i < vec_a.size; i++)
@@ -431,7 +481,7 @@ static double mag_diff_vec(MatrixOps::vector vec_a, MatrixOps::vector vec_b)
 		sum += temp*temp;
 	}
 
-	return std:sqrt(sum);
+	return std::sqrt(sum);
 }
 
 /**
