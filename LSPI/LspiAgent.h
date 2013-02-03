@@ -1,5 +1,9 @@
 /**
  * Provides an implemenation of the Least Squared Policy Iteration algorithm for solving the inverted pendulum problem.
+ *
+ * Two template implementations are provided and only these two implementations should be used:
+ * *thrust::host_vector
+ * *thrust::device_vector
  */
 
 #include "stdafx.h"
@@ -8,6 +12,7 @@
 #include <array>
 #include "MatrixOps.h"
 
+template <typename vector_type>
 class LspiAgent: public Agent
 {
 	public:
@@ -34,16 +39,16 @@ class LspiAgent: public Agent
 
 	private:
 		double discount;
-		MatrixOps::vector w;
+		vector_type w;
 		
 		/**
 		 * Given a set of samples, performs a single update step on the current agent's policy.
 		 */
-		MatrixOps::vector lstdq(std::vector<std::array<double, 7>> samples);
+		vector_type lstdq(std::vector<std::array<double, 7>> samples);
 	
 		/**
 		 * Returns the policy function weights for the given angle, velocity, and action.
 		 * These weights can be used to compute the estimated fitness of the given action.
 		 */
-		MatrixOps::vector basis_function(double x, double v, int action);
+		vector_type basis_function(double x, double v, int action);
 };

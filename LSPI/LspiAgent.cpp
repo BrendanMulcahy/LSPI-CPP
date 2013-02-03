@@ -2,7 +2,7 @@
 #include "LspiAgent.h"
 
 #define NUM_ACTIONS 3
-#define BASIS_SIZE 10
+#define BASIS_SIZE 100
 #define SIGMA_2 1
 
 using namespace std;
@@ -22,6 +22,9 @@ using namespace std;
  */
 LspiAgent::LspiAgent(std::vector<array<double, 7>> samples, double disc)
 {
+	MatrixOps::initializeCUDA();
+	MatrixOps::initializeCUBLAS();
+
 	discount = disc;
 	w = MatrixOps::vec_zeros(BASIS_SIZE*NUM_ACTIONS);
 
@@ -76,18 +79,18 @@ MatrixOps::vector LspiAgent::lstdq(std::vector<array<double, 7>> samples)
 
 		// Break the calculation into smaller parts
 		MatrixOps::mult_vec_in_place(discount, phi_prime);
-		MatrixOps::sub(phi, phi_prime, phi_prime);
-		MatrixOps::vector temp = MatrixOps::mult_vec(B, phi);
+		MatrixOps::add(phi, phi_prime, phi_prime, -1.0);
+		MatrixOps::vector temp = MatrixOps::mult_vec(phi, B);
 		MatrixOps::vector temp2 = MatrixOps::mult_vec(phi_prime, B);
 		MatrixOps::matrix num = MatrixOps::mult(temp, temp2);
 
 		double denom = 1.0 + MatrixOps::dot(temp2, phi);
 		MatrixOps::mult_in_place(1.0/denom, num);
-		MatrixOps::sub(B, num, B);
+		MatrixOps::add(B, num, B, -1.0);
 
 		// Update values
 		MatrixOps::mult_vec_in_place(samples[i][3], phi);
-		MatrixOps::add(b, phi, b);
+		MatrixOps::add(b, phi, b, 1.0);
 
 		MatrixOps::free_vec(phi);
 		MatrixOps::free_vec(phi_prime);
@@ -96,7 +99,7 @@ MatrixOps::vector LspiAgent::lstdq(std::vector<array<double, 7>> samples)
 		MatrixOps::free_mat(num);
 	}
 	
-	MatrixOps::vector result = MatrixOps::mult_vec(B, b);
+	MatrixOps::vector result = MatrixOps::mult_vec(b, B);
 
 	MatrixOps::free_mat(B);
 	MatrixOps::free_vec(b);

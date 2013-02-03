@@ -13,6 +13,8 @@ int MatrixOps::errorCode = 0;
 int MatrixOps::devID = 0;
 cublasHandle_t MatrixOps::handle;
 
+extern "C" dgemm_(char* TRANSA, char* TRANSB,M,N,K,ALPHA,A,LDA,B,LDB,BETA,C,LDC);
+
 /**
 * Initializes the CUDA device.
 */
@@ -133,6 +135,14 @@ MatrixOps::matrix MatrixOps::mat_zeros(int rows, int columns)
 	mat.columns = columns;
 	mat.rows = rows;
 	mat.matrix = (double *)malloc(sizeof(double)*mat.columns*mat.rows);
+
+	for(int col = 0; col < mat.columns; col++)
+	{
+		for(int row = 0; row < mat.rows; row++)
+		{
+			mat.matrix[col*mat.rows + row] = 0.0;
+		}
+	}
 	
 	return mat;
 }
@@ -286,7 +296,123 @@ bool MatrixOps::exec_cublasGetMatrix(double *src, matrix mat)
 		printf("cublasGetMatrix return error code %d, line (%d)\n", status, __LINE__);
 		return false;
 	}
-	MatrixOps::mat_print(mat);
+
+	return true;
+}
+
+/**
+ * Wrapper for cublas set vector.
+ */
+bool MatrixOps::exec_cublasSetVector(double *dvec, vector vec)
+{
+	cublasStatus_t status;
+
+	status = cublasSetVector(vec.size, sizeof(double), vec.vector, 1, dvec, 1);
+	if(status != CUBLAS_STATUS_SUCCESS)
+	{
+		if(status == CUBLAS_STATUS_INVALID_VALUE) { printf("\nInvalid value\n"); }
+		if(status == CUBLAS_STATUS_MAPPING_ERROR) { printf("\nMapping error\n"); }
+		printf("cublasSetVector return error code %d, line (%d)\n", status, __LINE__);
+		return false;
+	}
+
+	return true;
+}
+
+/**
+ * Wrapper for cublas get vector.
+ */
+bool MatrixOps::exec_cublasGetVector(double *dvec, vector vec)
+{
+	cublasStatus_t status;
+
+	status = cublasGetVector(vec.size, sizeof(double), dvec, 1, vec.vector, 1);
+	if(status != CUBLAS_STATUS_SUCCESS)
+	{
+		printf("cublasGetVector return error code %d, line (%d)\n", status, __LINE__);
+		return false;
+	}
+
+	return true;
+}
+
+/**
+ * Wrapper for cublas d scal
+ */
+bool MatrixOps::exec_cublasDscal(double alpha, double *dvec, int n)
+{
+	cublasStatus_t status;
+
+	status = cublasDscal(handle, n, &alpha, dvec, 1);
+	if(status != CUBLAS_STATUS_SUCCESS)
+	{
+		printf("cublasGetVector return error code %d, line (%d)\n", status, __LINE__);
+		return false;
+	}
+
+	return true;
+}
+
+/**
+ * Wrapper for cublas d gemv
+ */
+bool MatrixOps::exec_cublasDgemv(double *dvec, double *dmat, double *dvec_result, int m, int k, int n)
+{
+	cublasStatus_t status;
+
+	cublasOperation_t trans;
+	if(k == n)
+	{
+		trans = CUBLAS_OP_N;
+	}
+	else
+	{
+		trans = CUBLAS_OP_T;
+	}
+	
+	double alpha = 1.0;
+	double beta = 0.0;
+	status = cublasDgemv(handle, trans, m, k, &alpha, dmat, m, dvec, 1, &beta, dvec_result, 1); 
+	if(status != CUBLAS_STATUS_SUCCESS)
+	{
+		printf("cublasGetVector return error code %d, line (%d)\n", status, __LINE__);
+		return false;
+	}
+
+	return true;
+}
+
+/**
+ * Wrapper for cublas d dot
+ */
+bool MatrixOps::exec_cublasDdot(double *dvec_A, double *dvec_B, double *result, int size)
+{
+	cublasStatus_t status;
+
+	status = cublasDdot(handle, size, dvec_A, 1, dvec_B, 1, result);
+	if(status != CUBLAS_STATUS_SUCCESS)
+	{
+		printf("cublasGetVector return error code %d, line (%d)\n", status, __LINE__);
+		return false;
+	}
+
+	return true;
+}
+
+/**
+ * Wrapper for cublas d axpy
+ */
+bool MatrixOps::exec_cublasDgeam(double *dmat_A, double *dmat_B, double *dmat_result, int m, int n, double beta)
+{
+	cublasStatus_t status;
+
+	double alpha = 1.0;
+	status = cublasDgeam(handle, CUBLAS_OP_N, CUBLAS_OP_N, m, n, &alpha, dmat_A, m, &beta, dmat_B, m, dmat_result, m);
+	if(status != CUBLAS_STATUS_SUCCESS)
+	{
+		printf("cublasGetVector return error code %d, line (%d)\n", status, __LINE__);
+		return false;
+	}
 
 	return true;
 }
@@ -392,44 +518,233 @@ void MatrixOps::mult_in_place(double beta, matrix mat)
 	if(!(exec_cublasGetMatrix(dmat, mat)))
 	{
 		MatrixOps::errorCode = -1;
-		return mat_result;
+		return;
 	}
 
 	cudaFree(dmat);
+
+	MatrixOps::errorCode = 0;
+	return;
+}
+
+/**
+* Computes A*B
+*/
+double MatrixOps::dot(vector vec_A, vector vec_B)
+{
+	double *dvec_A, *dvec_B, result = 0.0;
+	
+	if(!exec_cudaMalloc(&dvec_A, sizeof(double)*vec_A.size))
+	{
+		MatrixOps::errorCode = -1;
+		return result;
+	}
+
+	if(!exec_cudaMalloc(&dvec_B, sizeof(double)*vec_B.size))
+	{
+		MatrixOps::errorCode = -1;
+		return result;
+	}
+
+	if(!exec_cublasSetVector(dvec_A, vec_A))
+	{
+		MatrixOps::errorCode = -1;
+		return result;
+	}
+
+	if(!exec_cublasSetVector(dvec_B, vec_B))
+	{
+		MatrixOps::errorCode = -1;
+		return result;
+	} 
+
+	if(!exec_cublasDdot(dvec_A, dvec_B, &result, vec_A.size))
+	{
+		MatrixOps::errorCode = -1;
+		return result;
+	}
+
+	cudaFree(dvec_A);
+	cudaFree(dvec_B);
+
+	MatrixOps::errorCode = 0;
+	return result;
+}
+
+/**
+* computes A*B^T
+*/
+MatrixOps::matrix MatrixOps::mult(vector vec_A, vector vec_B)
+{
+	matrix mat_result = mat_zeros(vec_A.size, vec_B.size);
+
+	if(vec_A.size != vec_B.size)
+	{
+		printf("This won't work! Your dimensions suck: %dx1 * 1%d"
+				, vec_A.size
+				, vec_B.size);
+		MatrixOps::errorCode = -1;
+		return mat_result;
+	}
+
+	// Allocate device memory
+	double *dmat_A, *dmat_B, *dmat_result;
+	if(!(exec_cudaMalloc(&dmat_A, sizeof(double)*vec_A.size)
+		&& exec_cudaMalloc(&dmat_B, sizeof(double)*vec_B.size)
+		&& exec_cudaMalloc(&dmat_result, sizeof(double)*vec_A.size*vec_B.size))
+	  )
+	{
+		MatrixOps::errorCode = -1;
+		return mat_result;
+	}
+
+	// Copy from host to device
+	if(!(exec_cublasSetVector(dmat_A, vec_A)
+		&& exec_cublasSetVector(dmat_B, vec_B))
+	  )
+	{
+		MatrixOps::errorCode = -1;
+		return mat_result;
+	}
+
+	// MULTIPLY
+	if(!(exec_cublasDgemm(dmat_A, dmat_B, dmat_result, vec_A.size, 1, vec_B.size)))
+	{
+		MatrixOps::errorCode = -1;
+		return mat_result;
+	}
+
+	// Retrieve the results
+	if(!(exec_cublasGetMatrix(dmat_result, mat_result)))
+	{
+		MatrixOps::errorCode = -1;
+		return mat_result;
+	}
+
+	cudaFree(dmat_A);
+	cudaFree(dmat_B);
+	cudaFree(dmat_result);
 
 	MatrixOps::errorCode = 0;
 	return mat_result;
 }
 
 /**
- * Computes the result of the vector-matrix operation of mat * vec.
- * Sets the errorCode to -1 if an error is encountered.
- * Even if it errors you must call free.
- */
-MatrixOps::vector MatrixOps::mult_vec(matrix mat, vector vec)
+* Computes A + mod*B
+*/
+void MatrixOps::add(vector vec_A, vector vec_B, vector vec_result, double mod)
 {
-	vector vec_result = vec_zeros(mat.rows);
-
-	if(mat.columns != vec.size)
+	if(vec_A.size != vec_B.size)
 	{
-		printf("This won't work! Your dimensions suck: %dx%d * %d"
-				, mat.rows
-				, mat.columns
-				, vec.size);
+		printf("This won't work! Your dimensions suck: %d + %d"
+				, vec_A.size
+				, vec_B.size);
 		MatrixOps::errorCode = -1;
-		return vec_result;
+		return;
 	}
 
-	// INSERT MULTIPLY CODE HERE
+	// Allocate device memory
+	double *dvec_A, *dvec_B, *dvec_result;
+	if(!(exec_cudaMalloc(&dvec_A, sizeof(double)*vec_A.size)
+		&& exec_cudaMalloc(&dvec_B, sizeof(double)*vec_B.size)
+		&& exec_cudaMalloc(&dvec_result, sizeof(double)*vec_A.size*vec_B.size))
+	  )
+	{
+		MatrixOps::errorCode = -1;
+		return;
+	}
 
+	// Copy from host to device
+	if(!(exec_cublasSetVector(dvec_A, vec_A)
+		&& exec_cublasSetVector(dvec_B, vec_B))
+	  )
+	{
+		MatrixOps::errorCode = -1;
+		return;
+	}
 
+	// MULTIPLY
+	if(!(exec_cublasDgeam(dvec_A, dvec_B, dvec_result, vec_A.size, 1, mod)))
+	{
+		MatrixOps::errorCode = -1;
+		return;
+	}
+
+	// Retrieve the results
+	if(!(exec_cublasGetVector(dvec_result, vec_result)))
+	{
+		MatrixOps::errorCode = -1;
+		return;
+	}
+
+	cudaFree(dvec_A);
+	cudaFree(dvec_B);
+	cudaFree(dvec_result);
 
 	MatrixOps::errorCode = 0;
-	return vec_result;
+	return;
 }
 
 /**
- * Computes the result of the vector-matrix operation of vec * mat.
+* Computes A + mod*B
+*/
+void MatrixOps::add(matrix mat_A, matrix mat_B, matrix mat_result, double mod)
+{
+	if(mat_A.rows != mat_B.rows || mat_A.columns != mat_B.columns)
+	{
+		printf("This won't work! Your dimensions suck: %dx%d * %dx%d"
+				, mat_A.rows
+				, mat_A.columns
+				, mat_B.rows
+				, mat_B.columns);
+		MatrixOps::errorCode = -1;
+		return;
+	}
+
+	// Allocate device memory
+	double *dmat_A, *dmat_B, *dmat_result;
+	if(!(exec_cudaMalloc(&dmat_A, sizeof(double)*mat_A.rows*mat_A.columns)
+		&& exec_cudaMalloc(&dmat_B, sizeof(double)*mat_B.rows*mat_B.columns)
+		&& exec_cudaMalloc(&dmat_result, sizeof(double)*mat_A.rows*mat_A.columns))
+	  )
+	{
+		MatrixOps::errorCode = -1;
+		return;
+	}
+
+	// Copy from host to device
+	if(!(exec_cublasSetMatrix(dmat_A, mat_A)
+		&& exec_cublasSetMatrix(dmat_B, mat_B))
+	  )
+	{
+		MatrixOps::errorCode = -1;
+		return;
+	}
+
+	// MULTIPLY
+	if(!(exec_cublasDgeam(dmat_A, dmat_B, dmat_result, mat_A.rows, mat_A.columns, mod)))
+	{
+		MatrixOps::errorCode = -1;
+		return;
+	}
+
+	// Retrieve the results
+	if(!(exec_cublasGetMatrix(dmat_result, mat_result)))
+	{
+		MatrixOps::errorCode = -1;
+		return;
+	}
+
+	cudaFree(dmat_A);
+	cudaFree(dmat_B);
+	cudaFree(dmat_result);
+
+	MatrixOps::errorCode = 0;
+	return;
+}
+
+/**
+ * Computes the result of the vector-matrix operation of mat * vec
  * Sets the errorCode to -1 if an error is encountered.
  * Even if it errors you must call free.
  */
@@ -447,10 +762,111 @@ MatrixOps::vector MatrixOps::mult_vec(vector vec, matrix mat)
 		return vec_result;
 	}
 
-	// INSERT MULTIPLY CODE HERE
+	double *dvec, *dmat, *dvec_result;
+	if(!exec_cudaMalloc(&dvec, sizeof(double)*vec.size))
+	{
+		MatrixOps::errorCode = -1;
+		return vec_result;
+	}
+
+	if(!exec_cudaMalloc(&dmat, sizeof(double)*mat.rows*mat.columns))
+	{
+		MatrixOps::errorCode = -1;
+		return vec_result;
+	}
+
+	size_t result_size;
+	if(mat.rows == vec.size && mat.columns == vec.size)
+	{
+		result_size = mat.rows;
+	}
+	else if(mat.rows == vec.size && mat.columns != vec.size)
+	{
+		result_size = mat.columns;
+	}
+	else if(mat.rows != vec.size && mat.columns == vec.size)
+	{
+		result_size = mat.rows;
+	}
+	else
+	{
+		printf("Bad dimensions dummy. Your matrix is %dx%d and your vector is size %d", mat.rows, mat.columns, vec.size);
+		MatrixOps::errorCode = -1;
+		return vec_result;
+	}
+
+	if(!exec_cudaMalloc(&dvec_result, sizeof(double)*result_size))
+	{
+		MatrixOps::errorCode = -1;
+		return vec_result;
+	}
+
+	if(!exec_cublasSetVector(dvec, vec))
+	{
+		MatrixOps::errorCode = -1;
+		return vec_result;
+	}
+
+	if(!exec_cublasSetMatrix(dmat, mat))
+	{
+		MatrixOps::errorCode = -1;
+		return vec_result;
+	}
+
+	if(!exec_cublasDgemv(dvec, dmat, dvec_result, mat.rows, mat.columns, result_size))
+	{
+		MatrixOps::errorCode = -1;
+		return vec_result;
+	}
+
+	if(!exec_cublasGetVector(dvec_result, vec_result))
+	{
+		MatrixOps::errorCode = -1;
+		return vec_result;
+	}
+
+	cudaFree(dvec);
+	cudaFree(dmat);
+	cudaFree(dvec_result);
 
 	MatrixOps::errorCode = 0;
 	return vec_result;
+}
+
+/**
+ * Computes the result of the double-vector operation of alpha * vec and stores the result in vec.
+ */
+void MatrixOps::mult_vec_in_place(double alpha, vector vec)
+{
+	double *dvec;
+	
+	if(!exec_cudaMalloc(&dvec, sizeof(double)*vec.size))
+	{
+		MatrixOps::errorCode = -1;
+		return;
+	}
+
+	if(!exec_cublasSetVector(dvec, vec))
+	{
+		MatrixOps::errorCode = -1;
+		return;
+	}
+
+	if(!exec_cublasDscal(alpha, dvec, vec.size))
+	{
+		MatrixOps::errorCode = -1;
+		return;
+	}
+
+	if(!exec_cublasGetVector(dvec, vec))
+	{
+		MatrixOps::errorCode = -1;
+		return;
+	}
+
+	cudaFree(dvec);
+
+	MatrixOps::errorCode = 0;
 }
 
 /**
@@ -485,11 +901,10 @@ double MatrixOps::mag_diff_vec(vector vec_a, vector vec_b)
 }
 
 /**
-* Prints the size contents of the matrix (rows -> columns).
+* Prints the contents of the matrix (rows -> columns).
 */
 void MatrixOps::mat_print(matrix mat)
 {
-	printf("%dx%d:\n", mat.rows, mat.columns);
 	for(int row = 0; row < mat.rows; row++)
 	{
 		for(int col = 0; col < mat.columns; col++)
@@ -498,4 +913,32 @@ void MatrixOps::mat_print(matrix mat)
 		}
 		printf("\n");
 	}
+}
+
+/**
+* Prints the contents of the vector.
+*/
+void MatrixOps::vec_print(vector vec)
+{
+	for(int i = 0; i < vec.size; i++)
+	{
+		printf("%f ", vec.vector[i]);
+	}
+	printf("\n");
+}
+
+/**
+ *
+ */
+void MatrixOps::free_mat(matrix mat)
+{
+	free(mat.matrix);
+}
+
+/**
+ *
+ */
+void MatrixOps::free_vec(vector vec)
+{
+	free(vec.vector);
 }

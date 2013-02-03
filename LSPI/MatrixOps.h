@@ -78,19 +78,39 @@ class MatrixOps
 		static matrix mult(matrix mat_A, matrix mat_B);
 
 		/**
+		 * Computes A*B
+		 */
+		static double dot(vector vec_A, vector vec_B);
+
+		/**
+		 * computes A*B^T
+		 */
+		static matrix mult(vector vec_A, vector vec_B);
+
+		/**
+		 * Computes A + mod*B
+		 */
+		static void add(vector vec_A, vector vec_B, vector vec_result, double mod);
+
+		/**
+		 * Computes A + mod*B
+		 */
+		static void add(matrix mat_A, matrix mat_B, matrix mat_result, double mod);
+
+		/**
 		 * Multiplies in place every element of mat by alpha
 		 */
 		static void MatrixOps::mult_in_place(double alpha, MatrixOps::matrix mat);
 
 		/**
-		 * Computes the result of the vector-matrix operation of mat * vec.
-		 */
-		static vector mult_vec(matrix mat, vector vec);
-
-		/**
-		 * Computes the result of the vector-matrix operation of vec * mat
+		 * Computes the result of the vector-matrix operation of mat * vec
 		 */
 		static vector mult_vec(vector vec, matrix mat);
+
+		/**
+		 * Computes the result of the double-vector operation of alpha * vec and stores the result in vec.
+		 */
+		static void MatrixOps::mult_vec_in_place(double alpha, vector vec);
 
 		/**
 		 * Calculates and returns the magnitude of the given vector.
@@ -114,9 +134,14 @@ class MatrixOps
 		static void free_vec(vector matrix);
 
 		/**
-		 * Prints the size contents of the matrix (rows -> columns).
+		 * Prints the size and contents of the matrix (rows -> columns).
 		 */
 		static void mat_print(matrix mat);
+
+		/**
+		 * Prints the size and contents of the vector.
+		 */
+		static void vec_print(vector vec);
 
 	private:
 		static int devID;
@@ -153,4 +178,34 @@ class MatrixOps
 		 * Wraps cublas get matrix. Detects errors and reports true or false based on the result.
 		 */
 		static bool exec_cublasGetMatrix(double *dmat_result, matrix mat_result);
+
+		/**
+		 * Wrapper for cublas set vector.
+		 */
+		static bool MatrixOps::exec_cublasSetVector(double *dvec, vector vec);
+
+		/**
+		 * Wrapper for cublas get vector.
+		 */
+		static bool MatrixOps::exec_cublasGetVector(double *dvec, vector vec);
+
+		/**
+		 * Wrapper for cublas d scal
+		 */
+		static bool MatrixOps::exec_cublasDscal(double alpha, double *dvec, int n);
+
+		/**
+		 * Wrapper for cublas d gemv
+		 */
+		static bool MatrixOps::exec_cublasDgemv(double *dvec, double *dmat, double *dvec_result, int m, int k, int n);
+
+		/**
+		 * Wrapper for cublas d dot
+		 */
+		static bool MatrixOps::exec_cublasDdot(double *dvec_A, double *dvec_B, double *result, int size);
+
+		/**
+		 * Wrapper for cublas d axpy
+		 */
+		static bool MatrixOps::exec_cublasDgeam(double *dmat_A, double *dmat_B, double *dmat_result, int m, int n, double beta);
 };
