@@ -80,9 +80,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="LSPI.cpp" />
-    <ClCompile Include="LspiAgent.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-    </ClCompile>
+    <ClCompile Include="LspiAgent.cpp" />
     <ClCompile Include="MatrixOps.cpp" />
     <ClCompile Include="Pendulum.cpp" />
     <ClCompile Include="stdafx.cpp">

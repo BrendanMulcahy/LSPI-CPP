@@ -13,6 +13,10 @@
 #include "MatrixOps.h"
 #include <thrust\host_vector.h>
 
+#define NUM_ACTIONS 3
+#define BASIS_SIZE 100
+#define SIGMA_2 1
+
 template <typename vector_type>
 class LspiAgent: public Agent
 {
