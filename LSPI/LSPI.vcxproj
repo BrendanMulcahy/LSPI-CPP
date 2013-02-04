@@ -79,6 +79,7 @@
     <None Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="blas.cpp" />
     <ClCompile Include="LSPI.cpp" />
     <ClCompile Include="LspiAgent.cpp" />
     <ClCompile Include="MatrixOps.cpp" />

@@ -36,6 +36,9 @@
     <ClCompile Include="TestMatrixOps.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="blas.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="LSPI.rc">
