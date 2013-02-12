@@ -1,45 +1,70 @@
+#pragma once
+
 /**
  * Provides a thin wrapper around thrust vectors to support matrix style operations.
  */
-
 template <class vec_type> 
 class Matrix
 {
 	public:
 		/**
-		 * Creates a matrix of size Rows by Cols. The cublas handle specified will be used
-		 * to execute all GPU accelerated operations. The matrix has no values explicitly set.
+		 * Creates a matrix of size NxN. The matrix has no values explicitly set.
 		 */
-		Matrix(int rows, int cols);
+		Matrix(int n)
+		{
+			rows = n;
+			cols = n;
+			vector(n*n);
+		}
 
 		/**
-		 * Frees the memory allocated to contain the matrix.
+		 * Creates a matrix of size MxN. The matrix has no values explicitly set.
 		 */
-		~Matrix();
+		Matrix(int m, int n)
+		{
+			rows = m;
+			cols = n;
+			vector(rows*cols);
+		}
 
-		/**
-		 * Sets the matrix to a matrix of zeros.
-		 */
-		void makeZeros();
+		// TODO: I don't think we actually need to do this
+		///**
+		// * Frees the memory allocated to contain the matrix.
+		// */
+		//~Matrix()
+		//{
+		//	vector.clear();
 
-		/**
-		 * Sets the matrix to an identity matrix, such that for every coordinate (x, y), 
-		 * get(x, y) = 1.0 iff x == y, otherwise get(x, y) = 0.0.
-		 */ 
-		void makeIdentity();
+		//}
+
+		void makeZeros()
+		{
+			fill(vector.begin(), vector.end(), 0);
+		}
 
 		/**
 		 * Sets the value of coordinate (row, col) to val.
 		 */
-		void set(int row, int col, float val);
+		void set(int row, int col, float val)
+		{
+			vector[col*rows + row] = val;
+		}
 
 		/**
 		 * Returns the value of coordinate (row, col).
 		 */
-		float get(int row, int col);
+		float get(int row, int col)
+		{
+			return vector[col*rows + row];
+		}
 
+		// TODO: Fill this in for debugging
 		/**
 		 * Returns a string representation of the matrix (each row is on a new line).
 		 */
-		char* toString();
+	//	char* toString();
+
+	private:
+		vec_type vector;
+		int rows, cols;
 };

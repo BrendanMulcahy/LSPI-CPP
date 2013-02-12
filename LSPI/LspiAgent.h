@@ -1,3 +1,5 @@
+#pragma once
+
 /**
  * Provides an implemenation of the Least Squared Policy Iteration algorithm for solving the inverted pendulum problem.
  *
@@ -9,13 +11,16 @@
 #include "stdafx.h"
 #include "Agent.h"
 #include <vector>
-#include <array>
-#include "MatrixOps.h"
+#include "blas.h"
+#include "Matrix.h"
 #include <thrust\host_vector.h>
 
 #define NUM_ACTIONS 3
 #define BASIS_SIZE 100
 #define SIGMA_2 1
+
+using namespace thrust;
+using namespace blas;
 
 template <typename vector_type>
 class LspiAgent: public Agent
@@ -39,12 +44,14 @@ class LspiAgent: public Agent
 			MatrixOps::initializeCUDA();
 			MatrixOps::initializeCUBLAS();
 
+			// TODO: Init w
 			discount = disc;
-			w = MatrixOps::vec_zeros(BASIS_SIZE*NUM_ACTIONS);
+			w(BASIS_SIZE*NUM_ACTIONS);
 
 			// Loop until policy converges
 			vector_type policy = lstdq(samples);
-			while(MatrixOps::mag_diff_vec(w, policy) > epsilon_const)
+			// TODO: Make this work and stuff
+			while(0.0 > epsilon_const)
 			{
 				w = policy;
 				policy = lstdq(samples);
@@ -83,12 +90,83 @@ class LspiAgent: public Agent
 		/**
 		 * Given a set of samples, performs a single update step on the current agent's policy.
 		 */
-		vector_type lstdq(thrust::host_vector<float[7]> samples);
+		vector_type lstdq(thrust::host_vector<float[7]> samples)
+		{
+			// TODO: Crap init values for like.. B *and* b
+			Matrix<vector_type>::Matrix B(BASIS_SIZE*NUM_ACTIONS);
+			B.makeZeros(); // TODO: This is going to need reworking to be the identity matrix (actually reworking the math)
+			gemm(&B, 0.1);
+			vector_type b(BASIS_SIZE*NUM_ACTIONS);
+			for(int i = 0; i < samples.size(); i++)
+			{
+				// Get the basis functions
+				vector_type phi = basis_function(samples[i][0], samples[i][1], samples[i][2]);
+				int next_action = getAction(samples[i][4], samples[i][5]);
+				vector_type phi_prime = basis_function(samples[i][4], samples[i][5], next_action);
+
+				// Break the calculation into smaller parts
+				scal(&phi_prime, discount);
+				axpy(&phi, &phi_prime, -1.0);
+
+				// TODO: Try to eliminate extra memory allocation by reusing vectors
+				vector_type temp(phi.size());
+				vector_type temp2(phi.size());
+				Matrix::Matrix num(BASIS_SIZE*NUM_ACTIONS);
+				gemv(&B, &phi, &temp);
+				gemv(&B, &phi_prime, &temp2);
+				gemm(&temp, &temp2, &num);
+
+				double denom;
+				dot(&phi, &temp2, &denom);
+				denom += 1.0;
+
+				gemm(&num, 1.0/denom);
+				geam(&B, &num, &B, 1.0, -1.0);
+
+				// Update values
+				scal(&phi, samples[i][3]);
+				axpy(&phi, &b);
+			}
+	
+			vector_type result(b.size());
+			gemv(&B, &b, &result);
+
+			return result;
+		}
 	
 		/**
 		 * Returns the policy function weights for the given angle, velocity, and action.
 		 * These weights can be used to compute the estimated fitness of the given action.
 		 */
-		vector_type basis_function(float x, float v, int action);
+		vector_type basis_function(float x, float v, int action)
+		{
+			// TODO: Make it zeros
+			vector_type phi(BASIS_SIZE*NUM_ACTIONS);
+
+			// If we're horizontal then the basis function is all 0s
+			if (fabs(x) - M_PI/(2.0) >= 0)
+			{
+				return phi;
+			}
+
+			// TODO: Move this into a transform/cuda kernel
+			// Now populate the basis function for this state action pair
+			// Note that each entry except for the first is a gaussian.
+			int i = BASIS_SIZE * (action);
+			phi[i] = 1.0;
+			i += 1;
+			float value = M_PI/2.0;
+			for(float j = -value; j <= value; j += (value/((BASIS_SIZE-1)/6)))
+			{
+				for(float k = -1; k <= 1; k += 1)
+				{
+					float dist = (x - j)*(x - j) + (v - k)*(v - k);
+					phi[i] = exp(-dist/(2*SIGMA_2));
+					i += 1;
+				}
+			}
+
+			return phi;
+		}
 };
 

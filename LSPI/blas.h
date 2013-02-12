@@ -57,7 +57,7 @@ namespace blas
 	int gemv(const Matrix<host_vector<float>>& A, const host_vector<float>& x, host_vector<float>& y, float alpha, bool transpose);
 
 	/**
-	 * Computes y = alpha*A*x. For alpha*x*A set tranpose to true.
+	 * Computes y = A*x. For x*A set tranpose to true.
  	 * Returns 0 if the operation was successful, an error code otherwise
 	 */
 	int gemv(const Matrix<host_vector<float>>& A, const host_vector<float>& x, host_vector<float>& y, bool transpose);
@@ -73,6 +73,18 @@ namespace blas
  	 * Returns 0 if the operation was successful, an error code otherwise
 	 */
 	int geam(const Matrix<host_vector<float>>& A, const Matrix<host_vector<float>>& B, Matrix<host_vector<float>>& C);
+
+	/**
+	 * Computes y = alpha*x + y
+ 	 * Returns 0 if the operation was successful, an error code otherwise
+	 */
+	int axpy(const host_vector<float>& x, host_vector<float>& y, float alpha);
+
+	/**
+	 * Computes y = x + y
+ 	 * Returns 0 if the operation was successful, an error code otherwise
+	 */
+	int axpy(const host_vector<float>& x, host_vector<float>& y);
 
 	//********** DEVICE CALLS **********//
 
@@ -125,7 +137,7 @@ namespace blas
 	int gemv(const Matrix<device_vector<float>>& A, const device_vector<float>& x, device_vector<float>& y, float alpha, bool transpose);
 
 	/**
-	 * Computes y = alpha*A*x. For alpha*x*A set tranpose to true.
+	 * Computes y = A*x. For x*A set tranpose to true.
  	 * Returns 0 if the operation was successful, an error code otherwise
 	 */
 	int gemv(const Matrix<device_vector<float>>& A, const device_vector<float>& x, device_vector<float>& y, bool transpose);
@@ -141,4 +153,16 @@ namespace blas
  	 * Returns 0 if the operation was successful, an error code otherwise
 	 */
 	int geam(const Matrix<device_vector<float>>& A, const Matrix<device_vector<float>>& B, Matrix<device_vector<float>>& C);
+
+	/**
+	 * Computes y = alpha*x + y
+ 	 * Returns 0 if the operation was successful, an error code otherwise
+	 */
+	int axpy(const device_vector<float>& x, device_vector<float>& y, float alpha);
+
+	/**
+	 * Computes y = x + y
+ 	 * Returns 0 if the operation was successful, an error code otherwise
+	 */
+	int axpy(const device_vector<float>& x, device_vector<float>& y);
 };

@@ -24,9 +24,6 @@
     <ClCompile Include="Pendulum.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="LspiAgent.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="LSPI.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

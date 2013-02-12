@@ -55,8 +55,8 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v5.0\lib\Win32;D:\Users\Ithiel\Documents\College\Thesis\BLAS</AdditionalLibraryDirectories>
-      <AdditionalDependencies>blas_win32.lib;cudart.lib;cublas.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v5.0\lib\Win32;</AdditionalLibraryDirectories>
+      <AdditionalDependencies>cudart.lib;cublas.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -81,7 +81,6 @@
   <ItemGroup>
     <ClCompile Include="blas.cpp" />
     <ClCompile Include="LSPI.cpp" />
-    <ClCompile Include="LspiAgent.cpp" />
     <ClCompile Include="MatrixOps.cpp" />
     <ClCompile Include="Pendulum.cpp" />
     <ClCompile Include="stdafx.cpp">

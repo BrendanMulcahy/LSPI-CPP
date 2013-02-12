@@ -105,6 +105,24 @@ int geam(const Matrix<host_vector<float>>& A, const Matrix<host_vector<float>>& 
 	return 0;
 }
 
+/**
+* Computes y = alpha*x + y
+* Returns 0 if the operation was successful, an error code otherwise
+*/
+int axpy(const host_vector<float>& x, host_vector<float>& y, float alpha)
+{
+	return 0;
+}
+
+/**
+* Computes y = x + y
+* Returns 0 if the operation was successful, an error code otherwise
+*/
+int axpy(const host_vector<float>& x, host_vector<float>& y)
+{
+	return 0;
+}
+
 //********** DEVICE CALLS **********//
 
 /**
@@ -202,6 +220,24 @@ int geam(const Matrix<device_vector<float>>& A, const Matrix<device_vector<float
 * Returns 0 if the operation was successful, an error code otherwise
 */
 int geam(const Matrix<device_vector<float>>& A, const Matrix<device_vector<float>>& B, Matrix<device_vector<float>>& C)
+{
+	return 0;
+}
+
+/**
+* Computes y = alpha*x + y
+* Returns 0 if the operation was successful, an error code otherwise
+*/
+int axpy(const device_vector<float>& x, device_vector<float>& y, float alpha)
+{
+	return 0;
+}
+
+/**
+* Computes y = x + y
+* Returns 0 if the operation was successful, an error code otherwise
+*/
+int axpy(const device_vector<float>& x, device_vector<float>& y)
 {
 	return 0;
 }

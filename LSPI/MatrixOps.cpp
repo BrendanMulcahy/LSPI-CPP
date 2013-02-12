@@ -13,7 +13,7 @@ int MatrixOps::errorCode = 0;
 int MatrixOps::devID = 0;
 cublasHandle_t MatrixOps::handle;
 
-extern "C" dgemm_(char* TRANSA, char* TRANSB,M,N,K,ALPHA,A,LDA,B,LDB,BETA,C,LDC);
+//extern "C" dgemm_(char* TRANSA, char* TRANSB,M,N,K,ALPHA,A,LDA,B,LDB,BETA,C,LDC);
 
 /**
 * Initializes the CUDA device.
