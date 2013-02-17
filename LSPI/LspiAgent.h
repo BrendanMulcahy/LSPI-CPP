@@ -92,11 +92,24 @@ class LspiAgent: public Agent
 		 */
 		vector_type lstdq(thrust::host_vector<float[7]> samples)
 		{
-			// TODO: Crap init values for like.. B *and* b
 			Matrix<vector_type>::Matrix B(BASIS_SIZE*NUM_ACTIONS);
-			B.makeZeros(); // TODO: This is going to need reworking to be the identity matrix (actually reworking the math)
+			fill(B.vector.begin(), B.vector.end(), 0.0);
+
+			// TODO: Put this in a function for both vector_types and write a custom CUDA kernel for the GPU implementation
+			for(int i = 0; i < B.rows; i++)
+			{
+				for(int j = 0; j < B.rows; j++)
+				{
+					if(i == j)
+						B.set(i, j, 1.0);
+				}
+			}
+
 			gemm(&B, 0.1);
+
 			vector_type b(BASIS_SIZE*NUM_ACTIONS);
+			fill(b.begin(), b.end(), 0.0);
+
 			for(int i = 0; i < samples.size(); i++)
 			{
 				// Get the basis functions
@@ -128,10 +141,9 @@ class LspiAgent: public Agent
 				axpy(&phi, &b);
 			}
 	
-			vector_type result(b.size());
-			gemv(&B, &b, &result);
+			gemv(&B, &b, &b);
 
-			return result;
+			return b;
 		}
 	
 		/**
@@ -140,8 +152,8 @@ class LspiAgent: public Agent
 		 */
 		vector_type basis_function(float x, float v, int action)
 		{
-			// TODO: Make it zeros
 			vector_type phi(BASIS_SIZE*NUM_ACTIONS);
+			fill(phi.begin(), phi.end(), 0.0);
 
 			// If we're horizontal then the basis function is all 0s
 			if (fabs(x) - M_PI/(2.0) >= 0)

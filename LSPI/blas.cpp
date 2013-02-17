@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "blas.h"
+#include "cblas.h"
 #include "cublas.h"
 
 using namespace blas;

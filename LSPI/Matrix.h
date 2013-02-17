@@ -7,6 +7,9 @@ template <class vec_type>
 class Matrix
 {
 	public:
+		vec_type vector;
+		int rows, cols;
+
 		/**
 		 * Creates a matrix of size NxN. The matrix has no values explicitly set.
 		 */
@@ -37,11 +40,6 @@ class Matrix
 
 		//}
 
-		void makeZeros()
-		{
-			fill(vector.begin(), vector.end(), 0);
-		}
-
 		/**
 		 * Sets the value of coordinate (row, col) to val.
 		 */
@@ -63,8 +61,4 @@ class Matrix
 		 * Returns a string representation of the matrix (each row is on a new line).
 		 */
 	//	char* toString();
-
-	private:
-		vec_type vector;
-		int rows, cols;
 };
