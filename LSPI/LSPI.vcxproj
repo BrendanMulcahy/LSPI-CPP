@@ -79,7 +79,8 @@
     <None Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="blas.cpp" />
+    <ClCompile Include="blas_device.cpp" />
+    <ClCompile Include="blas_host.cpp" />
     <ClCompile Include="LSPI.cpp" />
     <ClCompile Include="MatrixOps.cpp" />
     <ClCompile Include="Pendulum.cpp" />

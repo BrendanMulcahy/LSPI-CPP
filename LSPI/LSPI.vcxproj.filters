@@ -33,7 +33,10 @@
     <ClCompile Include="TestMatrixOps.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="blas.cpp">
+    <ClCompile Include="blas_host.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="blas_device.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
