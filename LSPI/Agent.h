@@ -26,6 +26,8 @@ class Agent
 				case 2:
 					return RF_OPT;
 			}
+			
+			return NF_OPT;
 		}
 
 		/**

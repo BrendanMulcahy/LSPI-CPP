@@ -6,12 +6,17 @@
 #include "blas.h"
 #include "cblas.h"
 
+using namespace thrust;
+
 /**
 * Computes C = alpha*A*B + beta*C
 * Returns 0 if the operation was successful, an error code otherwise
 */
 int blas::gemm(const Matrix<host_vector<float>>& A, const Matrix<host_vector<float>>& B, Matrix<host_vector<float>>& C, float alpha, float beta)
 {
+	sgemm_(CblasColMajor, CblasNoTrans, CblasNoTrans, C.rows, C.cols, A.cols, alpha, raw_pointer_cast(A.vector.data()), A.rows, raw_pointer_cast(B.vector.data()), B.rows,
+		   beta, raw_pointer_cast(C.vector.data()), C.rows);
+
 	return 0;
 }
 
@@ -48,6 +53,7 @@ int blas::gemm(Matrix<host_vector<float>>& A, float alpha)
 */
 int blas::scal(host_vector<float>& x, float alpha)
 {
+	sscal_(x.size(), alpha, raw_pointer_cast(x.data()), 1);
 	return 0;
 }
 
@@ -57,6 +63,7 @@ int blas::scal(host_vector<float>& x, float alpha)
 */
 int blas::dot(const host_vector<float>& x, const host_vector<float>& y, float& result)
 {
+
 	return 0;
 }
 	
@@ -122,4 +129,22 @@ int blas::axpy(const host_vector<float>& x, host_vector<float>& y, float alpha)
 int blas::axpy(const host_vector<float>& x, host_vector<float>& y)
 {
 	return blas::axpy(x, y, 1.0);
+}
+
+/**
+* Computes A = alpha*x*y.
+* Returns 0 if the operation was successful, an error code otherwise
+*/
+int blas::ger(const host_vector<float>& x, const host_vector<float>& y, Matrix<host_vector<float>>& A, float alpha)
+{
+	return 0;
+}
+
+/**
+* Computes A = x*y.
+* Returns 0 if the operation was successful, an error code otherwise
+*/
+int blas::ger(const host_vector<float>& x, const host_vector<float>& y, Matrix<host_vector<float>>& A)
+{
+	return blas::ger(x, y, A, 1.0);
 }

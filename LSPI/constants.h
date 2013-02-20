@@ -7,6 +7,7 @@
 
 #include <cmath>
 #include <cstdlib>
+#include "math_constants.h"
 
 // Force enums
 #define NF_OPT 0

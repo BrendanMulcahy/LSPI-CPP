@@ -9,6 +9,7 @@
  */
 
 #include "stdafx.h"
+#include "sample.h"
 #include "Agent.h"
 #include <vector>
 #include "blas.h"
@@ -39,14 +40,10 @@ class LspiAgent: public Agent
 		 * -v' is the angular velocity after executing the action
 		 * -t is 1 if the state after executing is terminal, 0 otherwise
 		 */
-		LspiAgent(thrust::host_vector<float[7]> samples, float discount)
+		LspiAgent(thrust::host_vector<sample> samples, float disc) : discount(disc), w(BASIS_SIZE*NUM_ACTIONS)
 		{
-			MatrixOps::initializeCUDA();
-			MatrixOps::initializeCUBLAS();
-
-			// TODO: Init w
-			discount = disc;
-			w(BASIS_SIZE*NUM_ACTIONS);
+			//MatrixOps::initializeCUDA();
+			//MatrixOps::initializeCUBLAS();
 
 			// Loop until policy converges
 			vector_type policy = lstdq(samples);
@@ -72,7 +69,8 @@ class LspiAgent: public Agent
 			for(int i = 0; i < 3; i++)
 			{
 				vector_type params = basis_function(x, v, options[i]);
-				float q = MatrixOps::dot(params, w);
+				float q; 
+				dot(params, w, q);
 				if(q > max)
 				{
 					action = options[i];
@@ -90,10 +88,10 @@ class LspiAgent: public Agent
 		/**
 		 * Given a set of samples, performs a single update step on the current agent's policy.
 		 */
-		vector_type lstdq(thrust::host_vector<float[7]> samples)
+		vector_type lstdq(thrust::host_vector<sample> samples)
 		{
-			Matrix<vector_type>::Matrix B(BASIS_SIZE*NUM_ACTIONS);
-			fill(B.vector.begin(), B.vector.end(), 0.0);
+			Matrix<vector_type> B(BASIS_SIZE*NUM_ACTIONS);
+			thrust::fill(B.vector.begin(), B.vector.end(), 0.0);
 
 			// TODO: Put this in a function for both vector_types and write a custom CUDA kernel for the GPU implementation
 			for(int i = 0; i < B.rows; i++)
@@ -105,43 +103,43 @@ class LspiAgent: public Agent
 				}
 			}
 
-			gemm(&B, 0.1);
+			gemm(B, 0.1);
 
 			vector_type b(BASIS_SIZE*NUM_ACTIONS);
-			fill(b.begin(), b.end(), 0.0);
+			thrust::fill(b.begin(), b.end(), 0.0);
 
 			for(int i = 0; i < samples.size(); i++)
 			{
 				// Get the basis functions
-				vector_type phi = basis_function(samples[i][0], samples[i][1], samples[i][2]);
-				int next_action = getAction(samples[i][4], samples[i][5]);
-				vector_type phi_prime = basis_function(samples[i][4], samples[i][5], next_action);
+				vector_type phi = basis_function(samples[i].angle, samples[i].angular_velocity, samples[i].action);
+				int next_action = getAction(samples[i].final_angle, samples[i].final_angular_velocity);
+				vector_type phi_prime = basis_function(samples[i].final_angle, samples[i].final_angular_velocity, next_action);
 
 				// Break the calculation into smaller parts
-				scal(&phi_prime, discount);
-				axpy(&phi, &phi_prime, -1.0);
+				scal(phi_prime, discount);
+				axpy(phi, phi_prime, -1.0);
 
 				// TODO: Try to eliminate extra memory allocation by reusing vectors
 				vector_type temp(phi.size());
 				vector_type temp2(phi.size());
-				Matrix::Matrix num(BASIS_SIZE*NUM_ACTIONS);
-				gemv(&B, &phi, &temp);
-				gemv(&B, &phi_prime, &temp2);
-				gemm(&temp, &temp2, &num);
+				Matrix<vector_type> num(BASIS_SIZE*NUM_ACTIONS);
+				gemv(B, phi, temp, false);
+				gemv(B, phi_prime, temp2, false);
+				ger(temp, temp2, num);
 
-				double denom;
-				dot(&phi, &temp2, &denom);
+				float denom;
+				dot(phi, temp2, denom);
 				denom += 1.0;
 
-				gemm(&num, 1.0/denom);
-				geam(&B, &num, &B, 1.0, -1.0);
+				gemm(num, 1.0/denom);
+				geam(B, num, B, 1.0, -1.0);
 
 				// Update values
-				scal(&phi, samples[i][3]);
-				axpy(&phi, &b);
+				scal(phi, samples[i].reward);
+				axpy(phi, b);
 			}
 	
-			gemv(&B, &b, &b);
+			gemv(B, b, b, false);
 
 			return b;
 		}
@@ -153,10 +151,10 @@ class LspiAgent: public Agent
 		vector_type basis_function(float x, float v, int action)
 		{
 			vector_type phi(BASIS_SIZE*NUM_ACTIONS);
-			fill(phi.begin(), phi.end(), 0.0);
+			thrust::fill(phi.begin(), phi.end(), 0.0);
 
 			// If we're horizontal then the basis function is all 0s
-			if (fabs(x) - M_PI/(2.0) >= 0)
+			if (fabs(x) - CUDART_PI_F/(2.0) >= 0)
 			{
 				return phi;
 			}
@@ -167,7 +165,7 @@ class LspiAgent: public Agent
 			int i = BASIS_SIZE * (action);
 			phi[i] = 1.0;
 			i += 1;
-			float value = M_PI/2.0;
+			float value = CUDART_PI_F/2.0;
 			for(float j = -value; j <= value; j += (value/((BASIS_SIZE-1)/6)))
 			{
 				for(float k = -1; k <= 1; k += 1)

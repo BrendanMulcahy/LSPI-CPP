@@ -13,22 +13,12 @@ class Matrix
 		/**
 		 * Creates a matrix of size NxN. The matrix has no values explicitly set.
 		 */
-		Matrix(int n)
-		{
-			rows = n;
-			cols = n;
-			vector(n*n);
-		}
+		Matrix(int n) : rows(n), cols(n), vector(n*n) {	}
 
 		/**
 		 * Creates a matrix of size MxN. The matrix has no values explicitly set.
 		 */
-		Matrix(int m, int n)
-		{
-			rows = m;
-			cols = n;
-			vector(rows*cols);
-		}
+		Matrix(int m, int n) : rows(m), cols(n), vector(m*n) { }
 
 		// TODO: I don't think we actually need to do this
 		///**

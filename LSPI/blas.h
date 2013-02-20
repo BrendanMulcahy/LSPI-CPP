@@ -86,6 +86,18 @@ namespace blas
 	 */
 	int axpy(const host_vector<float>& x, host_vector<float>& y);
 
+	/**
+	 * Computes A = alpha*x*y.
+ 	 * Returns 0 if the operation was successful, an error code otherwise
+	 */
+	int ger(const host_vector<float>& x, const host_vector<float>& y, Matrix<host_vector<float>>& A, float alpha);
+
+	/**
+	 * Computes A = x*y.
+ 	 * Returns 0 if the operation was successful, an error code otherwise
+	 */
+	int ger(const host_vector<float>& x, const host_vector<float>& y, Matrix<host_vector<float>>& A);
+
 	//********** DEVICE CALLS **********//
 
 	/**
@@ -165,4 +177,16 @@ namespace blas
  	 * Returns 0 if the operation was successful, an error code otherwise
 	 */
 	int axpy(const device_vector<float>& x, device_vector<float>& y);
+
+	/**
+	 * Computes A = alpha*x*y.
+ 	 * Returns 0 if the operation was successful, an error code otherwise
+	 */
+	int ger(const device_vector<float>& x, const device_vector<float>& y, Matrix<device_vector<float>>& A, float alpha);
+
+	/**
+	 * Computes A = x*y.
+ 	 * Returns 0 if the operation was successful, an error code otherwise
+	 */
+	int ger(const device_vector<float>& x, const device_vector<float>& y, Matrix<device_vector<float>>& A);
 };
