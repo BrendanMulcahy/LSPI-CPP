@@ -8,8 +8,8 @@
 Pendulum::Pendulum()
 {
 	// Initalize to a random position and velocity within a small boundary.
-	x = ((double)rand()/(double)RAND_MAX)*((10.0*M_PI)/180.0) - ((5.0*M_PI)/180.0);
-	v = ((double)rand()/(double)RAND_MAX)*((10.0*M_PI)/180.0) - ((5.0*M_PI)/180.0);
+	x = (float)(((float)rand()/(float)RAND_MAX)*((10.0f*M_PI)/180.0f) - ((5.0f*M_PI)/180.0f));
+	v = (float)(((float)rand()/(float)RAND_MAX)*((10.0f*M_PI)/180.0f) - ((5.0f*M_PI)/180.0f));
 }
 /**
  * Returns true if the pendulum is horizontal, false otherwise.
@@ -17,22 +17,23 @@ Pendulum::Pendulum()
 bool Pendulum::isHorizontal()
 {
 	if(abs(x) - M_PI/2.0 >= 0)
-			return true;
+		return true;
 	return false;
 }
 
 /**
  * Estimates the state change of the pendulum after the period of time, dt, has passed.
- * The u parameter represents the action, either NF_OPT, LF_OPT, or RF_OPT.
+ * The action can be either NF_OPT, LF_OPT, or RF_OPT.
  */
-void Pendulum::update(double dt, double u)
+void Pendulum::update(float dt, int action)
 {
+	float u;
 	// figure out what force to use
-	if(u == NF_OPT)
+	if(action == NF_OPT)
 		u = NF_FORCE;
-	else if(u == LF_OPT)
+	else if(action == LF_OPT)
 		u = LF_FORCE;
-	else if(u == RF_OPT)
+	else if(action == RF_OPT)
 		u = RF_FORCE;
 		
 	// Check if we have hit 90 degrees, if so we are stable
@@ -40,15 +41,15 @@ void Pendulum::update(double dt, double u)
 	{
 		this->v = 0;
 		if(this->x > 0)
-			this->x = M_PI/2.0;
+			this->x = (float)(M_PI/2.0f);
 		else
-			this->x = -M_PI/2.0;
+			this->x = (float)(-M_PI/2.0f);
 	}
 	else
 	{
-		u += ((double)rand()/(double)RAND_MAX)*2.0*(double)noise - noise; // Add noise to u
-		double accel = (g_const*sin(this->x) - a_const*m_const*l_const*this->v*this->v*sin(2*this->x)/2.0 - a_const*cos(this->x)*u);
-		accel = accel/(4.0*l_const/3.0 - a_const*m_const*l_const*pow(cos(this->x), 2));
+		u += (float)(((float)rand()/(float)RAND_MAX)*2.0f*(float)noise - noise); // Add noise to u
+		float accel = (g_const*sin(this->x) - a_const*m_const*l_const*this->v*this->v*sin(2.0f*this->x)/2.0f - a_const*cos(this->x)*u);
+		accel = accel/(4.0f*l_const/3.0f - a_const*m_const*l_const*pow(cos(this->x), 2));
 		this->x += this->v*dt;
 		this->v += accel*dt;
 	}

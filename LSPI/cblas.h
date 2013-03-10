@@ -26,6 +26,9 @@ float sdot_(const int N, const float  *X, const int incX, const float  *Y, const
 
 void saxpy_(const int N, const float alpha, const float *X, const int incX, float *Y, const int incY);
 
+void sger_(const enum CBLAS_ORDER order, const int M, const int N, const float alpha, const float *X, const int incX, const float *Y, 
+		   const int incY, float *A, const int lda);
+
 #ifdef __cplusplus
 }
 #endif

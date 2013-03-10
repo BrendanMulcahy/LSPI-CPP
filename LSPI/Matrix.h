@@ -46,9 +46,18 @@ class Matrix
 			return vector[col*rows + row];
 		}
 
-		// TODO: Fill this in for debugging
 		/**
-		 * Returns a string representation of the matrix (each row is on a new line).
+		 * Prints a string representation of the matrix.
 		 */
-	//	char* toString();
+		void print()
+		{
+			for(int row = 0; row < rows; row++)
+			{
+				for(int col = 0; col < cols; col++)
+				{
+					printf("%.1f ", get(row, col));
+				}
+				printf("\n");
+			}
+		}
 };

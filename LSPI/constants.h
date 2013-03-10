@@ -22,7 +22,7 @@
 #define m_const 2.0f
 #define M_const 8.0f
 #define l_const 0.5f
-#define a_const 1.0/(m_const+M_const)
+#define a_const 1.0f/(m_const+M_const)
 #define noise 0
 #define epsilon_const 0.00001f
 

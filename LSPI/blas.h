@@ -1,4 +1,7 @@
+#pragma once
+
 #include "Matrix.h"
+#include <cublas_v2.h>
 #include <thrust\host_vector.h>
 #include <thrust\device_vector.h>
 
@@ -6,6 +9,8 @@ using namespace thrust;
 
 namespace blas
 {
+	extern cublasHandle_t handle;
+
 	//********** HOST CALLS **********//
 
 	/**
@@ -86,14 +91,15 @@ namespace blas
 	 */
 	int axpy(const host_vector<float>& x, host_vector<float>& y);
 
+	// TODO: Provide an optimized implementation for just computing alpha*x*y^T
 	/**
-	 * Computes A = alpha*x*y.
+	 * Computes A = alpha*x*y + A.
  	 * Returns 0 if the operation was successful, an error code otherwise
 	 */
 	int ger(const host_vector<float>& x, const host_vector<float>& y, Matrix<host_vector<float>>& A, float alpha);
 
 	/**
-	 * Computes A = x*y.
+	 * Computes A = x*y + A.
  	 * Returns 0 if the operation was successful, an error code otherwise
 	 */
 	int ger(const host_vector<float>& x, const host_vector<float>& y, Matrix<host_vector<float>>& A);

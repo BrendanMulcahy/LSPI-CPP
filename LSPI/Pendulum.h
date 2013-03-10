@@ -8,7 +8,7 @@
 class Pendulum
 {
 	public:
-		double x, v;
+		float x, v;
 
 		/**
 		 * Constructor for objects of class Pendulum. Always starts with a random angle and angular velocity close to vertical.
@@ -22,9 +22,9 @@ class Pendulum
 
 		/**
 		 * Estimates the state change of the pendulum after the period of time, dt, has passed.
-		 * The u parameter represents the action, either NF_OPT, LF_OPT, or RF_OPT.
+		 * The action can be either NF_OPT, LF_OPT, or RF_OPT.
 		 */
-		void update(double dt, double u);
+		void update(float dt, int action);
 };
 
 #endif

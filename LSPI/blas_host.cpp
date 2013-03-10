@@ -63,7 +63,7 @@ int blas::scal(host_vector<float>& x, float alpha)
 */
 int blas::dot(const host_vector<float>& x, const host_vector<float>& y, float& result)
 {
-
+	result = sdot_(x.size(), raw_pointer_cast(x.data()), 1, raw_pointer_cast(y.data()), 1);
 	return 0;
 }
 	
@@ -73,6 +73,17 @@ int blas::dot(const host_vector<float>& x, const host_vector<float>& y, float& r
 */
 int blas::gemv(const Matrix<host_vector<float>>& A, const host_vector<float>& x, host_vector<float>& y, float alpha, float beta, bool transpose)
 {
+	CBLAS_TRANSPOSE trans;
+	if(transpose)
+	{
+		trans = CblasTrans;
+	}
+	else
+	{
+		trans = CblasNoTrans;
+	}
+
+	sgemv_(CblasColMajor, trans, A.rows, A.cols, alpha, raw_pointer_cast(A.vector.data()), A.rows, raw_pointer_cast(x.data()), 1, beta, raw_pointer_cast(y.data()), 1);
 	return 0;
 }
 
@@ -119,6 +130,7 @@ int blas::geam(const Matrix<host_vector<float>>& A, const Matrix<host_vector<flo
 */
 int blas::axpy(const host_vector<float>& x, host_vector<float>& y, float alpha)
 {
+	saxpy_(x.size(), alpha, raw_pointer_cast(x.data()), 1, raw_pointer_cast(y.data()), 1);
 	return 0;
 }
 
@@ -137,6 +149,7 @@ int blas::axpy(const host_vector<float>& x, host_vector<float>& y)
 */
 int blas::ger(const host_vector<float>& x, const host_vector<float>& y, Matrix<host_vector<float>>& A, float alpha)
 {
+	sger_(CblasColMajor, x.size(), y.size(), alpha, raw_pointer_cast(x.data()), 1, raw_pointer_cast(y.data()), 1, raw_pointer_cast(A.vector.data()), A.rows);
 	return 0;
 }
 

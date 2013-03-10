@@ -4,7 +4,8 @@
 
 #include "stdafx.h"
 #include "blas.h"
-#include "cublas.h"
+
+cublasHandle_t blas::handle;
 
 /**
 * Computes C = alpha*A*B + beta*C
@@ -12,7 +13,17 @@
 */
 int blas::gemm(const Matrix<device_vector<float>>& A, const Matrix<device_vector<float>>& B, Matrix<device_vector<float>>& C, float alpha, float beta)
 {
-	return 0;
+	cublasStatus_t status = cublasSgemm(blas::handle, CUBLAS_OP_N, CUBLAS_OP_N, C.rows, C.cols, A.cols, &alpha, raw_pointer_cast(A.vector.data()), 
+										A.rows, raw_pointer_cast(B.vector.data()), B.rows, &beta, raw_pointer_cast(C.vector.data()), C.rows);
+
+	if(status == CUBLAS_STATUS_SUCCESS)
+	{
+		return 0;
+	}
+	else
+	{
+		return -1;
+	}
 }
 
 /**
@@ -48,7 +59,16 @@ int blas::gemm(Matrix<device_vector<float>>& A, float alpha)
 */
 int blas::scal(device_vector<float>& x, float alpha)
 {
-	return 0;
+	cublasStatus_t status = cublasSscal(blas::handle, x.size(), &alpha, raw_pointer_cast(x.data()), 1);
+
+	if(status == CUBLAS_STATUS_SUCCESS)
+	{
+		return 0;
+	}
+	else
+	{
+		return -1;
+	}
 }
 
 /**
@@ -57,7 +77,16 @@ int blas::scal(device_vector<float>& x, float alpha)
 */
 int blas::dot(const device_vector<float>& x, const device_vector<float>& y, float& result)
 {
-	return 0;
+	cublasStatus_t status = cublasSdot(blas::handle, x.size(), raw_pointer_cast(x.data()), 1, raw_pointer_cast(y.data()), 1, &result);
+
+	if(status == CUBLAS_STATUS_SUCCESS)
+	{
+		return 0;
+	}
+	else
+	{
+		return -1;
+	}
 }
 	
 /**
@@ -66,7 +95,27 @@ int blas::dot(const device_vector<float>& x, const device_vector<float>& y, floa
 */
 int blas::gemv(const Matrix<device_vector<float>>& A, const device_vector<float>& x, device_vector<float>& y, float alpha, float beta, bool transpose)
 {
-	return 0;
+	cublasStatus_t status;
+	
+	if(transpose)
+	{
+		status = cublasSgemv(blas::handle, CUBLAS_OP_T, A.rows, A.cols, &alpha, raw_pointer_cast(A.vector.data()), A.rows, raw_pointer_cast(x.data()),
+						     1, &beta, raw_pointer_cast(y.data()), 1);
+	}
+	else
+	{
+		status = cublasSgemv(blas::handle, CUBLAS_OP_N, A.rows, A.cols, &alpha, raw_pointer_cast(A.vector.data()), A.rows, raw_pointer_cast(x.data()),
+							 1, &beta, raw_pointer_cast(y.data()), 1);
+	}
+
+	if(status == CUBLAS_STATUS_SUCCESS)
+	{
+		return 0;
+	}
+	else
+	{
+		return -1;
+	}
 }
 
 /**
@@ -93,7 +142,17 @@ int blas::gemv(const Matrix<device_vector<float>>& A, const device_vector<float>
 */
 int blas::geam(const Matrix<device_vector<float>>& A, const Matrix<device_vector<float>>& B, Matrix<device_vector<float>>& C, float alpha, float beta)
 {
-	return 0;
+	cublasStatus_t status = cublasSgeam(blas::handle, CUBLAS_OP_N, CUBLAS_OP_N, A.rows, A.cols, &alpha, raw_pointer_cast(A.vector.data()),
+									    A.rows, &beta, raw_pointer_cast(B.vector.data()), B.rows, raw_pointer_cast(C.vector.data()), C.rows);
+
+	if(status == CUBLAS_STATUS_SUCCESS)
+	{
+		return 0;
+	}
+	else
+	{
+		return -1;
+	}
 }
 
 /**
@@ -111,7 +170,16 @@ int blas::geam(const Matrix<device_vector<float>>& A, const Matrix<device_vector
 */
 int blas::axpy(const device_vector<float>& x, device_vector<float>& y, float alpha)
 {
-	return 0;
+	cublasStatus_t status = cublasSaxpy(blas::handle, x.size(), &alpha, raw_pointer_cast(x.data()), 1, raw_pointer_cast(y.data()), 1);
+	
+	if(status == CUBLAS_STATUS_SUCCESS)
+	{
+		return 0;
+	}
+	else
+	{
+		return -1;
+	}
 }
 
 /**
@@ -121,4 +189,32 @@ int blas::axpy(const device_vector<float>& x, device_vector<float>& y, float alp
 int blas::axpy(const device_vector<float>& x, device_vector<float>& y)
 {
 	return blas::axpy(x, y, 1.0);
+}
+
+/**
+* Computes A = alpha*x*y.
+* Returns 0 if the operation was successful, an error code otherwise
+*/
+int blas::ger(const device_vector<float>& x, const device_vector<float>& y, Matrix<device_vector<float>>& A, float alpha)
+{
+	cublasStatus_t status = cublasSger(blas::handle, x.size(), y.size(), &alpha, raw_pointer_cast(x.data()), 1, raw_pointer_cast(y.data()), 1,
+									   raw_pointer_cast(A.vector.data()), A.rows);
+
+	if(status == CUBLAS_STATUS_SUCCESS)
+	{
+		return 0;
+	}
+	else
+	{
+		return -1;
+	}
+}
+
+/**
+* Computes A = x*y.
+* Returns 0 if the operation was successful, an error code otherwise
+*/
+int blas::ger(const device_vector<float>& x, const device_vector<float>& y, Matrix<device_vector<float>>& A)
+{
+	return blas::ger(x, y, A, 1.0);
 }
