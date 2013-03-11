@@ -50,7 +50,7 @@ int blas::gemm(const Matrix<device_vector<float>>& A, const Matrix<device_vector
 */
 int blas::gemm(Matrix<device_vector<float>>& A, float alpha)
 {
-	return blas::gemm(A, A, A, 0.0, 1.0);
+	return blas::gemm(A, A, A, 0.0, alpha);
 }
 
 /**

@@ -25,9 +25,9 @@ using namespace std;
 
 #define DT_CONST 0.1f
 #define NUM_TRIALS 10000
-#define NUM_SAMPLE_TRIALS 100
+#define NUM_SAMPLE_TRIALS 1000
 #define DISCOUNT 0.9f
-#define TEST_FIRST
+//#define TEST_FIRST
 
 /**
  * Calculates the time between the two clock events. Currently is not working as expected.
@@ -45,6 +45,13 @@ int _tmain(int argc, _TCHAR* argv[])
 	if(!TestBlas::run_tests())
 		getch();
 #endif
+
+	cublasStatus_t stat = cublasCreate(&blas::handle);
+	if(stat != CUBLAS_STATUS_SUCCESS)
+	{
+		printf("CUBLAS Init Failure.");
+		return false;
+	}
 
 	printf("%d", NUM_SAMPLE_TRIALS);
 	srand((int)time(NULL));
@@ -96,7 +103,7 @@ int _tmain(int argc, _TCHAR* argv[])
 
 	for(int i = 0; i < NUM_TRIALS; i++)
 	{
-	/*	{
+		{
 			Pendulum pen;
 			Agent agent;
 			while(!pen.isHorizontal())
@@ -127,7 +134,7 @@ int _tmain(int argc, _TCHAR* argv[])
 				pen.update(DT_CONST, action);
 				noop_agent_life += 1;
 			}
-		}*/
+		}
 
 		{
 			Pendulum pen;
@@ -143,9 +150,9 @@ int _tmain(int argc, _TCHAR* argv[])
 	}
 
 	printf("\nSummary:\n");
-	//printf("Random Agent: %f\n", (double)(random_agent_life*DT_CONST)/NUM_TRIALS);
-	//printf("Clever Agent: %f\n", (double)(clever_agent_life*DT_CONST)/NUM_TRIALS);
-	//printf("No-Op Agent: %f\n", (double)(noop_agent_life*DT_CONST)/NUM_TRIALS);
+	printf("Random Agent: %f\n", (double)(random_agent_life*DT_CONST)/NUM_TRIALS);
+	printf("Clever Agent: %f\n", (double)(clever_agent_life*DT_CONST)/NUM_TRIALS);
+	printf("No-Op Agent: %f\n", (double)(noop_agent_life*DT_CONST)/NUM_TRIALS);
 	printf("LSPI Agent: %f\n", (double)(lspi_agent_life*DT_CONST)/NUM_TRIALS);
 
 	// Wait so we can get the results
