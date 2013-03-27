@@ -1,33 +1,28 @@
 /*
  * Enumerated and derived types
  */
-#define CBLAS_INDEX size_t  /* this may vary between platforms */
-
-enum CBLAS_ORDER {CblasRowMajor=101, CblasColMajor=102};
-enum CBLAS_TRANSPOSE {CblasNoTrans=111, CblasTrans=112, CblasConjTrans=113};
-enum CBLAS_UPLO {CblasUpper=121, CblasLower=122};
-enum CBLAS_DIAG {CblasNonUnit=131, CblasUnit=132};
-enum CBLAS_SIDE {CblasLeft=141, CblasRight=142};
+#define NORMAL 'N'
+#define TRANSPOSE 'T'
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-void sgemm_(const enum CBLAS_ORDER Order, const enum CBLAS_TRANSPOSE TransA, const enum CBLAS_TRANSPOSE TransB, const int M, const int N,
-            const int K, const float alpha, const float *A, const int lda, const float *B, const int ldb, const float beta, float *C, 
-			const int ldc);
+int sgemm_(const char const *transa, char *transb, const int *m, const int *n, const int *k, float *alpha, 
+		   const float *a, const int *lda, const float *b, const int *ldb, const float *beta, 
+		   float *c, const int *ldc);
 
-void sgemv_(const enum CBLAS_ORDER order, const enum CBLAS_TRANSPOSE TransA, const int M, const int N, const float alpha, const float *A, 
-			const int lda, const float *X, const int incX, const float beta, float *Y, const int incY);
+int sgemv_(const char *trans, const int *m, const int *n, const float *alpha, const float *a, const int *lda, 
+		   const float *x, const int *incx, const float *beta, float *y, const int *incy);
 
-void sscal_(const int N, const float alpha, float *X, const int incX);
+int sscal_(const int *n, const float *sa, float *sx, const int *incx);
 
-float sdot_(const int N, const float  *X, const int incX, const float  *Y, const int incY);
+double sdot_(const int *n, const float *sx, const int *incx, const float *sy, const int *incy);
 
-void saxpy_(const int N, const float alpha, const float *X, const int incX, float *Y, const int incY);
+int saxpy_(const int *n, const float *sa, const float *sx, const int *incx, float *sy, const int *incy);
 
-void sger_(const enum CBLAS_ORDER order, const int M, const int N, const float alpha, const float *X, const int incX, const float *Y, 
-		   const int incY, float *A, const int lda);
+int sger_(const int *m, const int *n, const float *alpha, const float *x, const int *incx, const float *y,
+		  const int *incy, float *a, const int *lda);
 
 #ifdef __cplusplus
 }

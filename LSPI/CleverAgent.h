@@ -12,7 +12,7 @@ class CleverAgent: public Agent
 		 * Selects an action by separating the valid range of the pendulum into three sections: up, left, and right. If the pendulum is already upright, it will do nothing. 
 		 * If the pendulum is leaning it will push depending on which direction the pendulum is leaning.
 		 */
-		int getAction(double x, double v)
+		int getAction(double x, double)
 		{
 			if(x < CUDART_PI_F/6.0 && x > -CUDART_PI_F/6.0)
 				return NF_OPT;

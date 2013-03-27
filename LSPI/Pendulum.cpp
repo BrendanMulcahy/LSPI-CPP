@@ -33,7 +33,7 @@ void Pendulum::update(float dt, int action)
 		u = NF_FORCE;
 	else if(action == LF_OPT)
 		u = LF_FORCE;
-	else if(action == RF_OPT)
+	else
 		u = RF_FORCE;
 		
 	// Check if we have hit 90 degrees, if so we are stable

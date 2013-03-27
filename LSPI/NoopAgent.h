@@ -11,7 +11,7 @@ class NoopAgent: public Agent
 		/**
 		 * Always returns NF_OPT
 		 */
-		int getAction(double x, double v)
+		int getAction(double, double)
 		{
 			return NF_OPT;
 		}

@@ -2,8 +2,7 @@
  * Represents an inverted pendulum.
  */
 
-#ifndef PENDULUM_H
-#define PENDULUM_H
+#pragma once
 
 class Pendulum
 {
@@ -26,5 +25,3 @@ class Pendulum
 		 */
 		void update(float dt, int action);
 };
-
-#endif

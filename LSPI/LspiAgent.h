@@ -17,13 +17,13 @@
 #include <thrust\host_vector.h>
 
 #define NUM_ACTIONS 3
-#define BASIS_SIZE 4
+#define BASIS_SIZE 10
 #define SIGMA_2 1
 
 #define PRINT(X) do															\
 	{																		\
 		printf("\n");														\
-		for(int z = 0; z < X.size(); z++) { printf("%.3f ", (float)X[z]); } \
+		for(int z = 0; z < X.size(); z++) { printf("%.6f\n", (float)X[z]); } \
 		printf("\n");														\
     } while(0)
 
@@ -63,27 +63,29 @@ class LspiAgent: public Agent
 			float magnitude = 0.0f;
 			for(int i = 0; i < temp.size(); i++)
 			{
-				magnitude += temp[i];
+				magnitude += temp[i]*temp[i];
 			}
 
-			while(sqrt(magnitude*magnitude) > epsilon_const)
+
+			int k = 0;
+			while(sqrt(magnitude) > epsilon_const && k < 10)
 			{
 				w = policy;
-			//	PRINT(w);
+				PRINT(w);
 				policy = lstdq(samples);
 
 				vector_type temp2(policy);
-				PRINT(w);
-				PRINT(policy);
 				blas::axpy(w, temp2, -1.0f);
-				PRINT(temp2);
 				//TODO: Write a magnitude function dammit!
 				magnitude = 0.0f;
 				for(int i = 0; i < temp2.size(); i++)
 				{
-					magnitude += temp2[i];
+					magnitude += temp2[i]*temp2[i];
 				}
+				k++;
 			}
+
+			PRINT(policy);
 
 			w = policy;
 		}
@@ -162,8 +164,10 @@ class LspiAgent: public Agent
 				vector_type temp(phi.size());
 				vector_type temp2(phi.size());
 				Matrix<vector_type> num(BASIS_SIZE*NUM_ACTIONS);
+				thrust::fill(num.vector.begin(), num.vector.end(), 0.0f);
+
 				gemv(B, phi, temp, false);
-				gemv(B, phi_prime, temp2, false);
+				gemv(B, phi_prime, temp2, true);
 				ger(temp, temp2, num);
 
 				//PRINT(temp);
@@ -183,7 +187,7 @@ class LspiAgent: public Agent
 				//B.print();
 
 				// Update values
-				scal(phi, samples[i].reward);
+				scal(phi, (float)samples[i].reward);
 				axpy(phi, b);
 
 				//PRINT(phi);
@@ -217,11 +221,11 @@ class LspiAgent: public Agent
 			// TODO: Move this into a transform/cuda kernel
 			// Now populate the basis function for this state action pair
 			// Note that each entry except for the first is a gaussian.
-			int i = BASIS_SIZE * (action);
+			int i = BASIS_SIZE * (action-1);
 			phi[i] = 1.0f;
 			i += 1;
-			float value = CUDART_PI_F/2.0f;
-			for(float j = -value; j <= value; j += (value/((BASIS_SIZE-1)/6.0) + 0.0001))
+			float value = CUDART_PI_F/4.0f;
+			for(float j = -value; j <= value; j += value)//(value/((BASIS_SIZE-1)/6.0) + 0.0001))
 			{
 				for(float k = -1; k <= 1; k += 1)
 				{

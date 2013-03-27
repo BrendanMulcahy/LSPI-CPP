@@ -59,7 +59,7 @@ int blas::gemm(Matrix<device_vector<float>>& A, float alpha)
 */
 int blas::scal(device_vector<float>& x, float alpha)
 {
-	cublasStatus_t status = cublasSscal(blas::handle, x.size(), &alpha, raw_pointer_cast(x.data()), 1);
+	cublasStatus_t status = cublasSscal(blas::handle, (int)x.size(), &alpha, raw_pointer_cast(x.data()), 1);
 
 	if(status == CUBLAS_STATUS_SUCCESS)
 	{
@@ -77,7 +77,7 @@ int blas::scal(device_vector<float>& x, float alpha)
 */
 int blas::dot(const device_vector<float>& x, const device_vector<float>& y, float& result)
 {
-	cublasStatus_t status = cublasSdot(blas::handle, x.size(), raw_pointer_cast(x.data()), 1, raw_pointer_cast(y.data()), 1, &result);
+	cublasStatus_t status = cublasSdot(blas::handle, (int)x.size(), raw_pointer_cast(x.data()), 1, raw_pointer_cast(y.data()), 1, &result);
 
 	if(status == CUBLAS_STATUS_SUCCESS)
 	{
@@ -170,7 +170,7 @@ int blas::geam(const Matrix<device_vector<float>>& A, const Matrix<device_vector
 */
 int blas::axpy(const device_vector<float>& x, device_vector<float>& y, float alpha)
 {
-	cublasStatus_t status = cublasSaxpy(blas::handle, x.size(), &alpha, raw_pointer_cast(x.data()), 1, raw_pointer_cast(y.data()), 1);
+	cublasStatus_t status = cublasSaxpy(blas::handle, (int)x.size(), &alpha, raw_pointer_cast(x.data()), 1, raw_pointer_cast(y.data()), 1);
 	
 	if(status == CUBLAS_STATUS_SUCCESS)
 	{
@@ -197,7 +197,7 @@ int blas::axpy(const device_vector<float>& x, device_vector<float>& y)
 */
 int blas::ger(const device_vector<float>& x, const device_vector<float>& y, Matrix<device_vector<float>>& A, float alpha)
 {
-	cublasStatus_t status = cublasSger(blas::handle, x.size(), y.size(), &alpha, raw_pointer_cast(x.data()), 1, raw_pointer_cast(y.data()), 1,
+	cublasStatus_t status = cublasSger(blas::handle, (int)x.size(), (int)y.size(), &alpha, raw_pointer_cast(x.data()), 1, raw_pointer_cast(y.data()), 1,
 									   raw_pointer_cast(A.vector.data()), A.rows);
 
 	if(status == CUBLAS_STATUS_SUCCESS)

@@ -1,5 +1,4 @@
-#ifndef CONSTANTS_H
-#define CONSTANTS_H
+#pragma once
 
 #ifndef _USE_MATH_DEFINES
 #define _USE_MATH_DEFINES
@@ -10,9 +9,9 @@
 #include "math_constants.h"
 
 // Force enums
-#define NF_OPT 0
-#define LF_OPT 1
-#define RF_OPT 2
+#define NF_OPT 1
+#define LF_OPT 2
+#define RF_OPT 3
 #define NF_FORCE 0
 #define LF_FORCE -50
 #define RF_FORCE 50
@@ -25,5 +24,3 @@
 #define a_const 1.0f/(m_const+M_const)
 #define noise 0
 #define epsilon_const 0.00001f
-
-#endif
