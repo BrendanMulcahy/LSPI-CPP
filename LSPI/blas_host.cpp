@@ -104,14 +104,24 @@ int blas::gemv(const Matrix<host_vector<float>>& A, const host_vector<float>& x,
 	return blas::gemv(A, x, y, 1.0, 0.0, transpose);
 }
 
-// TODO: geam does not exist in BLAS, I need to write an actual host implementation
 /**
 * Computes C = alpha*A + beta*B.
 * Returns 0 if the operation was successful, an error code otherwise
 */
 int blas::geam(const Matrix<host_vector<float>>& A, const Matrix<host_vector<float>>& B, Matrix<host_vector<float>>& C, float alpha, float beta)
 {
-	return 0;
+	// This is a bit slower than the GPU implementation since it relies on AXPY behind the scenes. Should not significantly impact the results
+	// since we are more concerned with scale and expecting perf increases in the range 100x. At best this could be completed about 3x as fast
+	// (algorithmically) and only represents part of the LSPI implementation.
+	thrust::fill(C.vector.begin(), C.vector.end(), 0.0f);
+
+	int rval = blas::axpy(A.vector, C.vector, alpha);
+	if(rval != 0)
+	{
+		return rval;
+	}
+
+	return blas::axpy(B.vector, C.vector, beta);
 }
 
 /**
