@@ -17,8 +17,10 @@
 #include <thrust\host_vector.h>
 
 #define NUM_ACTIONS 3
-#define BASIS_SIZE 10
+#define BASIS_SIZE 4
 #define SIGMA_2 1
+
+#define VERBOSE
 
 #define PRINT(X) do															\
 	{																		\
@@ -53,11 +55,17 @@ class LspiAgent: public Agent
 
 			// Loop until policy converges
 			vector_type policy = lstdq(samples);
-			//PRINT(policy);
+#if defined(VERBOSE)
+			PRINT(policy);
+#endif
 			vector_type temp(policy);
-			//PRINT(w);
+#if defined(VERBOSE)
+			PRINT(w);
+#endif
 			blas::axpy(w, temp, -1.0f);
-		//	PRINT(temp);
+#if defined(VERBOSE)
+			PRINT(temp);
+#endif
 
 			//TODO: Write a magnitude function dammit!
 			float magnitude = 0.0f;
@@ -138,9 +146,11 @@ class LspiAgent: public Agent
 			}
 
 			gemm(B, 0.1f);// TODO: Investigate the importance and effect of this number
-
-			//printf("\n");
-			//B.print();
+			
+#if defined(VERBOSE)
+			printf("\n");
+			B.print();
+#endif
 
 			vector_type b(BASIS_SIZE*NUM_ACTIONS);
 			thrust::fill(b.begin(), b.end(), 0.0f);
@@ -157,8 +167,13 @@ class LspiAgent: public Agent
 				axpy(phi, phi_prime, -1.0f); // TODO: Consider optimizing this by creating a custom kernel
 				scal(phi_prime, -1.0f); // This is because axpy does not allow us to do y = x - y, only y = y - x
 				
-				//PRINT(phi);
-				//PRINT(phi_prime);
+#if defined(VERBOSE)
+				printf("\n");
+				B.print();
+				printf("\n");
+				PRINT(phi);
+				PRINT(phi_prime);
+#endif
 
 				// TODO: Try to eliminate extra memory allocation by reusing vectors
 				vector_type temp(phi.size());
@@ -169,34 +184,49 @@ class LspiAgent: public Agent
 				gemv(B, phi, temp, false);
 				gemv(B, phi_prime, temp2, true);
 				ger(temp, temp2, num);
-
-				//PRINT(temp);
-				//PRINT(temp2);
-				//num.print();
+				
+#if defined(VERBOSE)
+				PRINT(temp);
+				PRINT(temp2);
+				num.print();
+#endif
 
 				float denom;
 				dot(phi, temp2, denom);
 				denom += 1.0f;
-
-				//printf("\n%.3f\n", denom);
+				
+#if defined(VERBOSE)
+				printf("\n%.3f\n", denom);
+#endif
 
 				gemm(num, 1.0f/denom);
 				geam(B, num, B, 1.0f, -1.0f);
-
-				//num.print();
-				//B.print();
+				
+#if defined(VERBOSE)
+				num.print();
+				B.print();
+#endif
 
 				// Update values
 				scal(phi, (float)samples[i].reward);
 				axpy(phi, b);
+				
+#if defined(VERBOSE)
+				printf("\n%d\n", samples[i].reward);
 
-				//PRINT(phi);
-				//PRINT(b);
+				PRINT(phi);
+				PRINT(b);
+#endif
 			}
+
+			B.print();
+			PRINT(b);
 	
 			gemv(B, b, b, false);
-
-			//PRINT(b);
+			
+#if defined(VERBOSE)
+			PRINT(b);
+#endif
 
 			return b;
 		}
@@ -225,7 +255,7 @@ class LspiAgent: public Agent
 			phi[i] = 1.0f;
 			i += 1;
 			float value = CUDART_PI_F/4.0f;
-			for(float j = -value; j <= value; j += value)//(value/((BASIS_SIZE-1)/6.0) + 0.0001))
+			for(float j = -value; j <= value; j += (value/((BASIS_SIZE-1)/6.0) + 0.0001))
 			{
 				for(float k = -1; k <= 1; k += 1)
 				{

@@ -51,14 +51,14 @@ bool TestBlas::run_tests()
 	float alpha = 2.0;
 	float beta = 0.5;
 	
-	printf("%.1f\n*\n", alpha);
+	printf("%.1f\n*", alpha);
 	hmat0.print();
-	printf("*\n");
+	printf("*");
 	hmat1.print();
 	printf("+\n");
-	printf("%.1f\n*\n", beta);
+	printf("%.1f\n*", beta);
 	hmat2.print();
-	printf("=\n");
+	printf("=");
 	
 	if(blas::gemm(hmat0, hmat1, hmat2, alpha, beta) != 0)
 	{
@@ -79,12 +79,12 @@ bool TestBlas::run_tests()
 	}
 
 	printf("\ngeam(A, B, C, alpha, beta):\n");
-	printf("%.1f\n*\n", alpha);
+	printf("%.1f\n*", alpha);
 	hmat0.print();
 	printf("+\n");
-	printf("%.1f\n*\n", beta);
+	printf("%.1f\n*", beta);
 	hmat1.print();
-	printf("=\n");
+	printf("=");
 
 	if(blas::geam(hmat0, hmat1, hmat2, alpha, beta) != 0)
 	{
@@ -115,7 +115,7 @@ bool TestBlas::run_tests()
 	hvec1[0] = 1.0;
 	hvec1[1] = 1.5;
 
-	printf("%.1f\n*\n", alpha);
+	printf("%.1f\n*", alpha);
 	hmat0.print();
 	printf("*\n%.1f %.1f\n+\n", (float)hvec0[0], (float)hvec0[1]);
 	printf("%.1f\n*\n%.1f %.1f\n=\n", beta, (float)hvec1[0], (float)hvec1[1]);
@@ -136,14 +136,14 @@ bool TestBlas::run_tests()
 		return false;
 	}
 
-	printf("\ngemv(A, x, true):\n");
-	printf("%.1f %.1f\n*\n", (float)hvec0[0], (float)hvec0[1]);
+	printf("\ngemv(A, x, y, true):\n");
+	printf("%.1f %.1f\n*", (float)hvec0[0], (float)hvec0[1]);
 	hmat0.print();
 	printf("=\n");
 
 	if(blas::gemv(hmat0, hvec0, hvec1, true) != 0)
 	{
-		printf("Failed to execute gemv.");
+		printf("Failed to execute host gemv.");
 		return false;
 	}
 
@@ -160,9 +160,9 @@ bool TestBlas::run_tests()
 	printf("\nger(x, y, A, alpha):\n");
 	printf("%.1f %.1f\nX\n%.1f %.1f\n+\n", (float)hvec0[0], (float)hvec0[1], (float)hvec1[0], (float)hvec1[1]);
 	hmat0.print();
-	printf("=\n");
+	printf("=");
 	
-	if(blas::ger(hvec0, hvec1, hmat0, alpha))
+	if(blas::ger(hvec0, hvec1, hmat0, alpha) != 0)
 	{
 		printf("Failed to execute ger.");
 		return false;
@@ -180,7 +180,7 @@ bool TestBlas::run_tests()
 		return false;
 	}
 
-	printf("\nTesting Device Vector-Vector operations.\n");
+	printf("\nTesting Host Vector-Vector operations.\n");
 
 	printf("\nscal(x, alpha):\n");
 	printf("%.1f\n*\n%.1f %.1f\n=\n", alpha, (float)hvec0[0], (float)hvec0[1]);
@@ -207,7 +207,7 @@ bool TestBlas::run_tests()
 	alpha = 0.0;
 	if(blas::dot(hvec0, hvec1, alpha) != 0)
 	{
-		printf("Failed to execute dot.");
+		printf("Failed to execute host dot.");
 		return false;
 	}
 
@@ -288,14 +288,14 @@ bool TestBlas::run_tests()
 	alpha = 2.0;
 	beta = 0.5;
 	
-	printf("%.1f\n*\n", alpha);
+	printf("%.1f\n*", alpha);
 	dmat0.print();
-	printf("*\n");
+	printf("*");
 	dmat1.print();
 	printf("+\n");
-	printf("%.1f\n*\n", beta);
+	printf("%.1f\n*", beta);
 	dmat2.print();
-	printf("=\n");
+	printf("=");
 	
 	if(blas::gemm(dmat0, dmat1, dmat2, alpha, beta) != 0)
 	{
@@ -316,12 +316,12 @@ bool TestBlas::run_tests()
 	}
 
 	printf("\ngeam(A, B, C, alpha, beta):\n");
-	printf("%.1f\n*\n", alpha);
+	printf("%.1f\n*", alpha);
 	dmat0.print();
 	printf("+\n");
-	printf("%.1f\n*\n", beta);
+	printf("%.1f\n*", beta);
 	dmat1.print();
-	printf("=\n");
+	printf("=");
 
 	if(blas::geam(dmat0, dmat1, dmat2, alpha, beta) != 0)
 	{
@@ -374,7 +374,7 @@ bool TestBlas::run_tests()
 	}
 
 	printf("\ngemv(A, x, true):\n");
-	printf("%.1f %.1f\n*\n", (float)dvec0[0], (float)dvec0[1]);
+	printf("%.1f %.1f\n*", (float)dvec0[0], (float)dvec0[1]);
 	dmat0.print();
 	printf("=\n");
 
@@ -395,13 +395,13 @@ bool TestBlas::run_tests()
 	}
 
 	printf("\nger(x, y, A, alpha):\n");
-	printf("%.1f %.1f\nX\n%.1f %.1f\n+\n", (float)dvec0[0], (float)dvec0[1], (float)dvec1[0], (float)dvec1[1]);
+	printf("%.1f %.1f\nX\n%.1f %.1f\n+", (float)dvec0[0], (float)dvec0[1], (float)dvec1[0], (float)dvec1[1]);
 	dmat0.print();
-	printf("=\n");
+	printf("=");
 	
-	if(blas::ger(dvec0, dvec1, dmat0, alpha))
+	if(blas::ger(dvec0, dvec1, dmat0, alpha) != 0)
 	{
-		printf("Failed to execute ger.");
+		printf("Failed to execute device ger.");
 		return false;
 	}
 

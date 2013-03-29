@@ -33,7 +33,7 @@ using namespace std;
 #define DISCOUNT 0.95f
 
 #define TEST_FIRST
-//#define USE_FILE // If defined, samples will be pulled from a file titled samples.txt instead of from randomly generated input
+#define USE_FILE // If defined, samples will be pulled from a file titled samples.txt instead of from randomly generated input
 
 /**
  * Calculates the time between the two clock events. Currently is not working as expected.
@@ -142,7 +142,7 @@ int _tmain(int, _TCHAR*)
 #endif
 
 	clock_t start = clock();
-	LspiAgent<host_vector<float>> lspi_agent_cpu(samples, DISCOUNT);
+//	LspiAgent<host_vector<float>> lspi_agent(samples, DISCOUNT);
 	LspiAgent<device_vector<float>> lspi_agent(samples, DISCOUNT); 
 	clock_t end = clock();
 	printf("Single-threaded: %f\n", diffclock(start, end));

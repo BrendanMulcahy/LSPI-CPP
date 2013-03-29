@@ -8,20 +8,20 @@
 extern "C" {
 #endif
 
-int sgemm_(const char const *transa, char *transb, const int *m, const int *n, const int *k, float *alpha, 
+void sgemm_(const char const *transa, char *transb, const int *m, const int *n, const int *k, float *alpha, 
 		   const float *a, const int *lda, const float *b, const int *ldb, const float *beta, 
 		   float *c, const int *ldc);
 
-int sgemv_(const char *trans, const int *m, const int *n, const float *alpha, const float *a, const int *lda, 
+void sgemv_(const char *trans, const int *m, const int *n, const float *alpha, const float *a, const int *lda, 
 		   const float *x, const int *incx, const float *beta, float *y, const int *incy);
 
-int sscal_(const int *n, const float *sa, float *sx, const int *incx);
+void sscal_(const int *n, const float *sa, float *sx, const int *incx);
 
 double sdot_(const int *n, const float *sx, const int *incx, const float *sy, const int *incy);
 
-int saxpy_(const int *n, const float *sa, const float *sx, const int *incx, float *sy, const int *incy);
+void saxpy_(const int *n, const float *sa, const float *sx, const int *incx, float *sy, const int *incy);
 
-int sger_(const int *m, const int *n, const float *alpha, const float *x, const int *incx, const float *y,
+void sger_(const int *m, const int *n, const float *alpha, const float *x, const int *incx, const float *y,
 		  const int *incy, float *a, const int *lda);
 
 #ifdef __cplusplus
