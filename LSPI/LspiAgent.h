@@ -20,7 +20,16 @@
 #define BASIS_SIZE 4
 #define SIGMA_2 1
 
-#define VERBOSE
+//#define VERBOSE_HIGH
+//#define VERBOSE_MED
+//#define VERBOSE_LOW
+
+#if defined(VERBOSE_HIGH)
+#	define VERBOSE_MED
+#	define VERBOSE_LOW
+#elif defined(VERBOSE_MED)
+#	define VERBOSE_LOW
+#endif
 
 #define PRINT(X) do															\
 	{																		\
@@ -55,15 +64,15 @@ class LspiAgent: public Agent
 
 			// Loop until policy converges
 			vector_type policy = lstdq(samples);
-#if defined(VERBOSE)
+#if defined(VERBOSE_HIGH)
 			PRINT(policy);
 #endif
 			vector_type temp(policy);
-#if defined(VERBOSE)
+#if defined(VERBOSE_HIGH)
 			PRINT(w);
 #endif
 			blas::axpy(w, temp, -1.0f);
-#if defined(VERBOSE)
+#if defined(VERBOSE_HIGH)
 			PRINT(temp);
 #endif
 
@@ -79,7 +88,9 @@ class LspiAgent: public Agent
 			while(sqrt(magnitude) > epsilon_const && k < 10)
 			{
 				w = policy;
+#if defined(VERBOSE_LOW)
 				PRINT(w);
+#endif
 				policy = lstdq(samples);
 
 				vector_type temp2(policy);
@@ -93,7 +104,9 @@ class LspiAgent: public Agent
 				k++;
 			}
 
+#if defined(VERBOSE_LOW)
 			PRINT(policy);
+#endif
 
 			w = policy;
 		}
@@ -106,7 +119,7 @@ class LspiAgent: public Agent
 		{
 			int action = -9999;
 			float max = -9999;
-			int options[3] = {RF_OPT, NF_OPT, LF_OPT};
+			int options[3] = {NF_OPT, LF_OPT, RF_OPT};
 			for(int i = 0; i < 3; i++)
 			{
 				vector_type params = basis_function(x, v, options[i]);
@@ -145,9 +158,9 @@ class LspiAgent: public Agent
 				}
 			}
 
-			gemm(B, 0.1f);// TODO: Investigate the importance and effect of this number
+			scal(B.vector, 0.1f); // TODO: Investigate the importance and effect of this number
 			
-#if defined(VERBOSE)
+#if defined(VERBOSE_HIGH)
 			printf("\n");
 			B.print();
 #endif
@@ -167,7 +180,7 @@ class LspiAgent: public Agent
 				axpy(phi, phi_prime, -1.0f); // TODO: Consider optimizing this by creating a custom kernel
 				scal(phi_prime, -1.0f); // This is because axpy does not allow us to do y = x - y, only y = y - x
 				
-#if defined(VERBOSE)
+#if defined(VERBOSE_HIGH)
 				printf("\n");
 				B.print();
 				printf("\n");
@@ -185,7 +198,7 @@ class LspiAgent: public Agent
 				gemv(B, phi_prime, temp2, true);
 				ger(temp, temp2, num);
 				
-#if defined(VERBOSE)
+#if defined(VERBOSE_HIGH)
 				PRINT(temp);
 				PRINT(temp2);
 				num.print();
@@ -195,14 +208,14 @@ class LspiAgent: public Agent
 				dot(phi, temp2, denom);
 				denom += 1.0f;
 				
-#if defined(VERBOSE)
+#if defined(VERBOSE_HIGH)
 				printf("\n%.3f\n", denom);
 #endif
 
-				gemm(num, 1.0f/denom);
-				geam(B, num, B, 1.0f, -1.0f);
+				scal(num.vector, 1.0f/denom);
+				axpy(num.vector, B.vector, -1.0f);
 				
-#if defined(VERBOSE)
+#if defined(VERBOSE_HIGH)
 				num.print();
 				B.print();
 #endif
@@ -211,7 +224,7 @@ class LspiAgent: public Agent
 				scal(phi, (float)samples[i].reward);
 				axpy(phi, b);
 				
-#if defined(VERBOSE)
+#if defined(VERBOSE_HIGH)
 				printf("\n%d\n", samples[i].reward);
 
 				PRINT(phi);
@@ -219,12 +232,15 @@ class LspiAgent: public Agent
 #endif
 			}
 
+#if defined(VERBOSE_MED)
 			B.print();
 			PRINT(b);
-	
-			gemv(B, b, b, false);
+#endif
+			vector_type temp_b(b.size());
+			gemv(B, b, temp_b, false);
+			b = temp_b;
 			
-#if defined(VERBOSE)
+#if defined(VERBOSE_MED)
 			PRINT(b);
 #endif
 
@@ -239,8 +255,10 @@ class LspiAgent: public Agent
 		{
 			vector_type phi(BASIS_SIZE*NUM_ACTIONS);
 			thrust::fill(phi.begin(), phi.end(), 0.0f);
-
-			//PRINT(phi);
+			
+#if defined(VERBOSE_HIGH)
+			PRINT(phi);
+#endif
 
 			// If we're horizontal then the basis function is all 0s
 			if (fabs(x) - CUDART_PI_F/(2.0f) >= 0)
@@ -265,7 +283,9 @@ class LspiAgent: public Agent
 				}
 			}
 
-			//PRINT(phi);
+#if defined(VERBOSE_HIGH)
+			PRINT(phi);
+#endif
 
 			return phi;
 		}

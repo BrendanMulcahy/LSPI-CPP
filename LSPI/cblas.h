@@ -8,10 +8,6 @@
 extern "C" {
 #endif
 
-void sgemm_(const char const *transa, char *transb, const int *m, const int *n, const int *k, float *alpha, 
-		   const float *a, const int *lda, const float *b, const int *ldb, const float *beta, 
-		   float *c, const int *ldc);
-
 void sgemv_(const char *trans, const int *m, const int *n, const float *alpha, const float *a, const int *lda, 
 		   const float *x, const int *incx, const float *beta, float *y, const int *incy);
 

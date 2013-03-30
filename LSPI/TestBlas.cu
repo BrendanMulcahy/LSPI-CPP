@@ -33,76 +33,9 @@ bool TestBlas::run_tests()
 	printf("\n%.1f ", hmat0.get(1, 0));
 	printf("%.1f\n", hmat0.get(1,1));
 
-	printf("\nTesting Host Matrix-Matrix operations.\n");
-
-	printf("\ngemm(A, B, C, alpha, beta):\n");
-	Matrix<host_vector<float>> hmat1(2);
-	hmat1.set(0, 0, 2.0);
-	hmat1.set(0, 1, 0.0);
-	hmat1.set(1, 0, 0.0);
-	hmat1.set(1, 1, 2.0);
-
-	Matrix<host_vector<float>> hmat2(2);
-	hmat2.set(0, 0, 16.0);
-	hmat2.set(0, 1, 12.0);
-	hmat2.set(1, 0, 8.0);
-	hmat2.set(1, 1, 4.0);
-
+	// Setup alpha and beta yo
 	float alpha = 2.0;
 	float beta = 0.5;
-	
-	printf("%.1f\n*", alpha);
-	hmat0.print();
-	printf("*");
-	hmat1.print();
-	printf("+\n");
-	printf("%.1f\n*", beta);
-	hmat2.print();
-	printf("=");
-	
-	if(blas::gemm(hmat0, hmat1, hmat2, alpha, beta) != 0)
-	{
-		printf("Failure to execute host gemm.");
-		return false;
-	}
-
-	hmat2.print();
-
-	if(!(abs(hmat2.get(0, 0) - 12.0) < Threshold &&
-	   abs(hmat2.get(0, 1) - 14.0) < Threshold &&
-	   abs(hmat2.get(1, 0) - 16.0) < Threshold &&
-	   abs(hmat2.get(1, 1) - 18.0) < Threshold)
-	  )
-	{
-		printf("Executed gemm but received an incorrect result.");
-		return false;
-	}
-
-	printf("\ngeam(A, B, C, alpha, beta):\n");
-	printf("%.1f\n*", alpha);
-	hmat0.print();
-	printf("+\n");
-	printf("%.1f\n*", beta);
-	hmat1.print();
-	printf("=");
-
-	if(blas::geam(hmat0, hmat1, hmat2, alpha, beta) != 0)
-	{
-		printf("Failure to execute host geam.");
-		return false;
-	}
-
-	hmat2.print();
-
-	if(!(abs(hmat2.get(0, 0) - 3.0) < Threshold &&
-		abs(hmat2.get(0, 1) - 4.0) < Threshold &&
-		abs(hmat2.get(1, 0) - 6.0) < Threshold &&
-		abs(hmat2.get(1, 1) - 9.0) < Threshold)
-	  )
-	{
-		printf("Executed geam but received an incorrect result.");
-		return false;
-	}
 
 	printf("\nTesting Host Matrix-Vector operations.\n");
 
@@ -270,76 +203,9 @@ bool TestBlas::run_tests()
 	printf("\n%.1f ", dmat0.get(1, 0));
 	printf("%.1f\n", dmat0.get(1,1));
 
-	printf("\nTesting Device Matrix-Matrix operations.\n");
-
-	printf("\ngemm(A, B, C, alpha, beta):\n");
-	Matrix<device_vector<float>> dmat1(2);
-	dmat1.set(0, 0, 2.0);
-	dmat1.set(0, 1, 0.0);
-	dmat1.set(1, 0, 0.0);
-	dmat1.set(1, 1, 2.0);
-
-	Matrix<device_vector<float>> dmat2(2);
-	dmat2.set(0, 0, 16.0);
-	dmat2.set(0, 1, 12.0);
-	dmat2.set(1, 0, 8.0);
-	dmat2.set(1, 1, 4.0);
-
+	// Reset alpha and beta yo
 	alpha = 2.0;
 	beta = 0.5;
-	
-	printf("%.1f\n*", alpha);
-	dmat0.print();
-	printf("*");
-	dmat1.print();
-	printf("+\n");
-	printf("%.1f\n*", beta);
-	dmat2.print();
-	printf("=");
-	
-	if(blas::gemm(dmat0, dmat1, dmat2, alpha, beta) != 0)
-	{
-		printf("Failure to execute device gemm.");
-		return false;
-	}
-
-	dmat2.print();
-
-	if(!(abs(dmat2.get(0, 0) - 12.0) < Threshold &&
-	   abs(dmat2.get(0, 1) - 14.0) < Threshold &&
-	   abs(dmat2.get(1, 0) - 16.0) < Threshold &&
-	   abs(dmat2.get(1, 1) - 18.0) < Threshold)
-	  )
-	{
-		printf("Executed gemm but received an incorrect result.");
-		return false;
-	}
-
-	printf("\ngeam(A, B, C, alpha, beta):\n");
-	printf("%.1f\n*", alpha);
-	dmat0.print();
-	printf("+\n");
-	printf("%.1f\n*", beta);
-	dmat1.print();
-	printf("=");
-
-	if(blas::geam(dmat0, dmat1, dmat2, alpha, beta) != 0)
-	{
-		printf("Failure to execute device geam.");
-		return false;
-	}
-
-	dmat2.print();
-
-	if(!(abs(dmat2.get(0, 0) - 3.0) < Threshold &&
-		abs(dmat2.get(0, 1) - 4.0) < Threshold &&
-		abs(dmat2.get(1, 0) - 6.0) < Threshold &&
-		abs(dmat2.get(1, 1) - 9.0) < Threshold)
-	  )
-	{
-		printf("Executed geam but received an incorrect result.");
-		return false;
-	}
 
 	printf("\nTesting Device Matrix-Vector operations.\n");
 

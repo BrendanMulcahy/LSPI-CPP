@@ -14,30 +14,6 @@ namespace blas
 	//********** HOST CALLS **********//
 
 	/**
-	 * Computes C = alpha*A*B + beta*C
- 	 * Returns 0 if the operation was successful, an error code otherwise
-	 */
-	int gemm(const Matrix<host_vector<float>>& A, const Matrix<host_vector<float>>& B, Matrix<host_vector<float>>& C, float alpha, float beta);
-
-	/**
-	 * Computes C = alpha*A*B
- 	 * Returns 0 if the operation was successful, an error code otherwise
-	 */
-	int gemm(const Matrix<host_vector<float>>& A, const Matrix<host_vector<float>>& B, Matrix<host_vector<float>>& C, float alpha);
-
-	/**
-	 * Computes C = A*B
- 	 * Returns 0 if the operation was successful, an error code otherwise
-	 */
-	int gemm(const Matrix<host_vector<float>>& A, const Matrix<host_vector<float>>& B, Matrix<host_vector<float>>& C);
-
-	/**
-	 * Computes A = alpha*A
- 	 * Returns 0 if the operation was successful, an error code otherwise
-	 */
-	int gemm(Matrix<host_vector<float>>& A, float alpha);
-
-	/**
 	 * Computes x = alpha*x. 
  	 * Returns 0 if the operation was successful, an error code otherwise
 	 */
@@ -68,18 +44,6 @@ namespace blas
 	int gemv(const Matrix<host_vector<float>>& A, const host_vector<float>& x, host_vector<float>& y, bool transpose);
 
 	/**
-	 * Computes C = alpha*A + beta*B.
- 	 * Returns 0 if the operation was successful, an error code otherwise
-	 */
-	int geam(const Matrix<host_vector<float>>& A, const Matrix<host_vector<float>>& B, Matrix<host_vector<float>>& C, float alpha, float beta);
-
-	/**
-	 * Computes C = A + B.
- 	 * Returns 0 if the operation was successful, an error code otherwise
-	 */
-	int geam(const Matrix<host_vector<float>>& A, const Matrix<host_vector<float>>& B, Matrix<host_vector<float>>& C);
-
-	/**
 	 * Computes y = alpha*x + y
  	 * Returns 0 if the operation was successful, an error code otherwise
 	 */
@@ -105,30 +69,6 @@ namespace blas
 	int ger(const host_vector<float>& x, const host_vector<float>& y, Matrix<host_vector<float>>& A);
 
 	//********** DEVICE CALLS **********//
-
-	/**
-	 * Computes C = alpha*A*B + beta*C
- 	 * Returns 0 if the operation was successful, an error code otherwise
-	 */
-	int gemm(const Matrix<device_vector<float>>& A, const Matrix<device_vector<float>>& B, Matrix<device_vector<float>>& C, float alpha, float beta);
-
-	/**
-	 * Computes C = alpha*A*B
- 	 * Returns 0 if the operation was successful, an error code otherwise
-	 */
-	int gemm(const Matrix<device_vector<float>>& A, const Matrix<device_vector<float>>& B, Matrix<device_vector<float>>& C, float alpha);
-
-	/**
-	 * Computes C = A*B
- 	 * Returns 0 if the operation was successful, an error code otherwise
-	 */
-	int gemm(const Matrix<device_vector<float>>& A, const Matrix<device_vector<float>>& B, Matrix<device_vector<float>>& C);
-
-	/**
-	 * Computes A = alpha*A
- 	 * Returns 0 if the operation was successful, an error code otherwise
-	 */
-	int gemm(Matrix<device_vector<float>>& A, float alpha);
 
 	/**
 	 * Computes x = alpha*x. 
@@ -159,18 +99,6 @@ namespace blas
  	 * Returns 0 if the operation was successful, an error code otherwise
 	 */
 	int gemv(const Matrix<device_vector<float>>& A, const device_vector<float>& x, device_vector<float>& y, bool transpose);
-
-	/**
-	 * Computes C = alpha*A + beta*B.
- 	 * Returns 0 if the operation was successful, an error code otherwise
-	 */
-	int geam(const Matrix<device_vector<float>>& A, const Matrix<device_vector<float>>& B, Matrix<device_vector<float>>& C, float alpha, float beta);
-
-	/**
-	 * Computes C = A + B.
- 	 * Returns 0 if the operation was successful, an error code otherwise
-	 */
-	int geam(const Matrix<device_vector<float>>& A, const Matrix<device_vector<float>>& B, Matrix<device_vector<float>>& C);
 
 	/**
 	 * Computes y = alpha*x + y

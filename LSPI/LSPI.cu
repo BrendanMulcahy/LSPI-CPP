@@ -28,11 +28,11 @@
 using namespace std;
 
 #define DT_CONST 0.1f
-#define NUM_TRIALS 10000
+#define NUM_TRIALS 1000
 #define NUM_SAMPLE_TRIALS 10000
 #define DISCOUNT 0.95f
 
-#define TEST_FIRST
+//#define TEST_FIRST
 #define USE_FILE // If defined, samples will be pulled from a file titled samples.txt instead of from randomly generated input
 
 /**
@@ -142,8 +142,8 @@ int _tmain(int, _TCHAR*)
 #endif
 
 	clock_t start = clock();
-//	LspiAgent<host_vector<float>> lspi_agent(samples, DISCOUNT);
-	LspiAgent<device_vector<float>> lspi_agent(samples, DISCOUNT); 
+	LspiAgent<host_vector<float>> lspi_agent(samples, DISCOUNT);
+//	LspiAgent<device_vector<float>> lspi_agent(samples, DISCOUNT); 
 	clock_t end = clock();
 	printf("Single-threaded: %f\n", diffclock(start, end));
 
