@@ -71,6 +71,9 @@
     <ClInclude Include="cblas.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="GradientAgent.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="blas_host.cpp">

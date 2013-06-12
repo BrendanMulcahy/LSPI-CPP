@@ -23,17 +23,18 @@
 #include <string.h>
 #include <stdlib.h>
 #include <fstream>
+#include "GradientAgent.h"
 
 
 using namespace std;
 
 #define DT_CONST 0.1f
-#define NUM_TRIALS 1000
-#define NUM_SAMPLE_TRIALS 10000
+#define NUM_TRIALS 100
+#define NUM_SAMPLE_TRIALS 100
 #define DISCOUNT 0.95f
 
 //#define TEST_FIRST
-#define USE_FILE // If defined, samples will be pulled from a file titled samples.txt instead of from randomly generated input
+//#define USE_FILE // If defined, samples will be pulled from a file titled samples.txt instead of from randomly generated input
 
 /**
  * Calculates the time between the two clock events. Currently is not working as expected.
@@ -93,6 +94,41 @@ int _tmain(int, _TCHAR*)
 		return -1;
 	}
 
+	Pendulum pen;
+	thrust::host_vector<float> tpol(12);
+	for(int i = 0; i < 12; i++)
+	{
+		tpol[i] = (float)rand()/RAND_MAX;
+	}
+	GradientAgent<thrust::device_vector<float>> gagent(tpol, 0.2, 0.8);
+
+	Pendulum tpen;
+	while(!pen.isHorizontal())
+	{
+		sample s;
+		s.angle = pen.x;
+		s.angular_velocity = pen.v;
+
+		int action = gagent.getAction(pen.x, pen.v);
+		pen.update(DT_CONST, action);
+		int reward = pen.isHorizontal() ? -1 : 0;
+
+		s.action = action;
+		s.reward = reward;
+		s.final_angle = pen.x;
+		s.final_angular_velocity = pen.v;
+
+		if (reward < 0)
+		{
+			s.terminal = 1;
+		}
+		else
+		{
+			s.terminal = 0;
+		}
+		gagent.update(s);
+	}
+
 	printf("%d", NUM_SAMPLE_TRIALS);
 	srand((unsigned int)time(NULL));
 	int random_agent_life = 0;
@@ -142,8 +178,8 @@ int _tmain(int, _TCHAR*)
 #endif
 
 	clock_t start = clock();
-	LspiAgent<host_vector<float>> lspi_agent(samples, DISCOUNT);
-//	LspiAgent<device_vector<float>> lspi_agent(samples, DISCOUNT); 
+//	LspiAgent<host_vector<float>> lspi_agent(samples, DISCOUNT);
+	LspiAgent<device_vector<float>> lspi_agent(samples, DISCOUNT); 
 	clock_t end = clock();
 	printf("Single-threaded: %f\n", diffclock(start, end));
 

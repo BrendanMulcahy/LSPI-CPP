@@ -112,6 +112,7 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
     <ClInclude Include="cblas.h" />
     <ClInclude Include="CleverAgent.h" />
     <ClInclude Include="constants.h" />
+    <ClInclude Include="GradientAgent.h" />
     <ClInclude Include="Matrix.h" />
     <ClInclude Include="LspiAgent.h" />
     <ClInclude Include="NoopAgent.h" />
