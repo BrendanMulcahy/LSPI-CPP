@@ -23,7 +23,9 @@
 #include <string.h>
 #include <stdlib.h>
 #include <fstream>
-#include "GradientAgent.h"
+//#include "GradientAgent.h"
+#include "QuakeDefs.h"
+#include <iomanip>
 
 
 using namespace std;
@@ -46,6 +48,7 @@ double diffclock(clock_t clock1,clock_t clock2)
 	return diffms;
 }
 
+#ifdef PENDULUM
 inline void getSamplesFromFile(string filename, thrust::host_vector<sample>& samples)
 {
 	ifstream file(filename);
@@ -79,7 +82,9 @@ inline void getSamplesFromFile(string filename, thrust::host_vector<sample>& sam
 		it = samples.end();
 	}
 }
+#endif
 
+#ifdef PENDULUM
 int _tmain(int, _TCHAR*)
 {
 #ifdef TEST_FIRST
@@ -92,41 +97,6 @@ int _tmain(int, _TCHAR*)
 	{
 		printf("CUBLAS Init Failure.");
 		return -1;
-	}
-
-	Pendulum pen;
-	thrust::host_vector<float> tpol(12);
-	for(int i = 0; i < 12; i++)
-	{
-		tpol[i] = (float)rand()/RAND_MAX;
-	}
-	GradientAgent<thrust::device_vector<float>> gagent(tpol, 0.2, 0.8);
-
-	Pendulum tpen;
-	while(!pen.isHorizontal())
-	{
-		sample s;
-		s.angle = pen.x;
-		s.angular_velocity = pen.v;
-
-		int action = gagent.getAction(pen.x, pen.v);
-		pen.update(DT_CONST, action);
-		int reward = pen.isHorizontal() ? -1 : 0;
-
-		s.action = action;
-		s.reward = reward;
-		s.final_angle = pen.x;
-		s.final_angular_velocity = pen.v;
-
-		if (reward < 0)
-		{
-			s.terminal = 1;
-		}
-		else
-		{
-			s.terminal = 0;
-		}
-		gagent.update(s);
 	}
 
 	printf("%d", NUM_SAMPLE_TRIALS);
@@ -178,8 +148,8 @@ int _tmain(int, _TCHAR*)
 #endif
 
 	clock_t start = clock();
-//	LspiAgent<host_vector<float>> lspi_agent(samples, DISCOUNT);
-	LspiAgent<device_vector<float>> lspi_agent(samples, DISCOUNT); 
+	LspiAgent<host_vector<float>> lspi_agent(samples, DISCOUNT);
+//	LspiAgent<device_vector<float>> lspi_agent(samples, DISCOUNT); 
 	clock_t end = clock();
 	printf("Single-threaded: %f\n", diffclock(start, end));
 
@@ -242,3 +212,411 @@ int _tmain(int, _TCHAR*)
 
 	return 0;
 }
+#else
+
+void updatePolicy()
+{
+	// Load the samples into a vector and update LSPI agent's policy
+	char *fname = "samples.dat";
+	host_vector<sample> samples;
+	string value;
+	ifstream file(fname);
+
+	thrust::host_vector<sample>::iterator it = samples.end(); 
+	while(file.good())
+	{
+		sample s;
+		lspi_action_basis_t *state = (lspi_action_basis_t*)malloc(sizeof(lspi_action_basis_t));
+		lspi_action_basis_t *fstate = (lspi_action_basis_t*)malloc(sizeof(lspi_action_basis_t));
+		s.state = state;
+		s.final_state = fstate;
+
+		//// Action ////
+		if(!getline(file, value, ','))
+		{
+			break;
+		}
+		s.action = atoi(value.c_str());
+		////////////////
+
+		/***** START READING STATE *****/
+
+		//// For calculated reward ////
+		getline(file, value, ',');
+		state->kill_diff = atoi(value.c_str());
+
+		getline(file, value, ',');
+		state->death_diff = atoi(value.c_str());
+
+		getline(file, value, ',');
+		state->health_diff = atoi(value.c_str());
+
+		getline(file, value, ',');
+		state->armor_diff = atoi(value.c_str());
+
+		getline(file, value, ',');
+		state->hit_count_diff = atoi(value.c_str());
+		///////////////////////////////
+
+		//// Stats ////
+		getline(file, value, ',');
+		state->stat_health = atoi(value.c_str());
+
+		getline(file, value, ',');
+		state->stat_armor = atoi(value.c_str());
+
+		getline(file, value, ',');
+		state->stat_max_health = atoi(value.c_str());
+		///////////////
+
+		//// Powerups ////
+		getline(file, value, ',');
+		state->pw_quad = atoi(value.c_str());
+
+		getline(file, value, ',');
+		state->pw_battlesuit = atoi(value.c_str());
+
+		getline(file, value, ',');
+		state->pw_haste = atoi(value.c_str());
+
+		getline(file, value, ',');
+		state->pw_invis = atoi(value.c_str());
+
+		getline(file, value, ',');
+		state->pw_regen = atoi(value.c_str());
+
+		getline(file, value, ',');
+		state->pw_flight = atoi(value.c_str());
+
+		getline(file, value, ',');
+		state->pw_scout = atoi(value.c_str());
+
+		getline(file, value, ',');
+		state->pw_guard = atoi(value.c_str());
+
+		getline(file, value, ',');
+		state->pw_doubler = atoi(value.c_str());
+
+		getline(file, value, ',');
+		state->pw_ammoregen = atoi(value.c_str());
+
+		getline(file, value, ',');
+		state->pw_invulnerability = atoi(value.c_str());
+		//////////////////
+
+		//// Ammo ////
+		getline(file, value, ',');
+		state->wp_gauntlet = atoi(value.c_str());
+
+		getline(file, value, ',');
+		state->wp_machinegun = atoi(value.c_str());
+		
+		getline(file, value, ',');
+		state->wp_shotgun = atoi(value.c_str());
+		
+		getline(file, value, ',');
+		state->wp_grenade_launcher = atoi(value.c_str());
+		
+		getline(file, value, ',');
+		state->wp_rocket_launcher = atoi(value.c_str());
+		
+		getline(file, value, ',');
+		state->wp_lightning = atoi(value.c_str());
+		
+		getline(file, value, ',');
+		state->wp_railgun = atoi(value.c_str());
+		
+		getline(file, value, ',');
+		state->wp_plasmagun = atoi(value.c_str());
+		
+		getline(file, value, ',');
+		state->wp_bfg = atoi(value.c_str());
+		
+		getline(file, value, ',');
+		state->wp_grappling_hook = atoi(value.c_str());
+		//////////////
+
+		//// Enemy Info ////
+		getline(file, value, ',');
+		state->enemy = atoi(value.c_str());
+
+		getline(file, value, ',');
+		state->enemy_line_dist = (float)atof(value.c_str());
+
+		getline(file, value, ',');
+		state->enemyposition_time = (float)atof(value.c_str());
+
+		getline(file, value, ',');
+		state->enemy_is_invisible = atoi(value.c_str());
+
+		getline(file, value, ',');
+		state->enemy_is_shooting = atoi(value.c_str());
+
+		getline(file, value, ',');
+		state->enemy_weapon = atoi(value.c_str());
+		////////////////////
+
+		//// Goal Info////
+		getline(file, value, ',');
+		state->goal_flags = atoi(value.c_str());
+
+		getline(file, value, ',');
+		state->item_type = atoi(value.c_str());
+		//////////////////
+
+		//// Exit Information ////
+		getline(file, value, ',');
+		state->last_enemy_area_exits = atoi(value.c_str());
+
+		getline(file, value, ',');
+		state->goal_area_exits = atoi(value.c_str());
+
+		getline(file, value, ',');
+		state->current_area_exits = atoi(value.c_str());
+		//////////////////////////
+		
+		//// Area Numbers ////
+		getline(file, value, ',');
+		state->current_area_num = atoi(value.c_str());
+
+		getline(file, value, ',');
+		state->goal_area_num = atoi(value.c_str());
+
+		getline(file, value, ',');
+		state->enemy_area_num = atoi(value.c_str());
+		//////////////////////////
+
+		//// Misc ////
+		getline(file, value, ',');
+		state->tfl = atoi(value.c_str());
+
+		getline(file, value, ',');
+		state->last_hit_count = atoi(value.c_str());
+		//////////////
+		
+		/***** END READING STATE *****/
+
+		/***** START READING FINAL STATE *****/
+
+		//// For calculated reward ////
+		getline(file, value, ',');
+		fstate->kill_diff = atoi(value.c_str());
+
+		getline(file, value, ',');
+		fstate->death_diff = atoi(value.c_str());
+
+		getline(file, value, ',');
+		fstate->health_diff = atoi(value.c_str());
+
+		getline(file, value, ',');
+		fstate->armor_diff = atoi(value.c_str());
+
+		getline(file, value, ',');
+		state->hit_count_diff = atoi(value.c_str());
+		///////////////////////////////
+
+		//// Stats ////
+		getline(file, value, ',');
+		fstate->stat_health = atoi(value.c_str());
+
+		getline(file, value, ',');
+		fstate->stat_armor = atoi(value.c_str());
+
+		getline(file, value, ',');
+		fstate->stat_max_health = atoi(value.c_str());
+		///////////////
+
+		//// Powerups ////
+		getline(file, value, ',');
+		fstate->pw_quad = atoi(value.c_str());
+
+		getline(file, value, ',');
+		fstate->pw_battlesuit = atoi(value.c_str());
+
+		getline(file, value, ',');
+		fstate->pw_haste = atoi(value.c_str());
+
+		getline(file, value, ',');
+		fstate->pw_invis = atoi(value.c_str());
+
+		getline(file, value, ',');
+		fstate->pw_regen = atoi(value.c_str());
+
+		getline(file, value, ',');
+		fstate->pw_flight = atoi(value.c_str());
+
+		getline(file, value, ',');
+		fstate->pw_scout = atoi(value.c_str());
+
+		getline(file, value, ',');
+		fstate->pw_guard = atoi(value.c_str());
+
+		getline(file, value, ',');
+		fstate->pw_doubler = atoi(value.c_str());
+
+		getline(file, value, ',');
+		fstate->pw_ammoregen = atoi(value.c_str());
+
+		getline(file, value, ',');
+		fstate->pw_invulnerability = atoi(value.c_str());
+		//////////////////
+
+		//// Ammo ////
+		getline(file, value, ',');
+		fstate->wp_gauntlet = atoi(value.c_str());
+
+		getline(file, value, ',');
+		fstate->wp_machinegun = atoi(value.c_str());
+		
+		getline(file, value, ',');
+		fstate->wp_shotgun = atoi(value.c_str());
+		
+		getline(file, value, ',');
+		fstate->wp_grenade_launcher = atoi(value.c_str());
+		
+		getline(file, value, ',');
+		fstate->wp_rocket_launcher = atoi(value.c_str());
+		
+		getline(file, value, ',');
+		fstate->wp_lightning = atoi(value.c_str());
+		
+		getline(file, value, ',');
+		fstate->wp_railgun = atoi(value.c_str());
+		
+		getline(file, value, ',');
+		fstate->wp_plasmagun = atoi(value.c_str());
+		
+		getline(file, value, ',');
+		fstate->wp_bfg = atoi(value.c_str());
+		
+		getline(file, value, ',');
+		fstate->wp_grappling_hook = atoi(value.c_str());
+		//////////////
+
+		//// Enemy Info ////
+		getline(file, value, ',');
+		fstate->enemy = atoi(value.c_str());
+
+		getline(file, value, ',');
+		fstate->enemy_line_dist = (float)atof(value.c_str());
+
+		getline(file, value, ',');
+		fstate->enemyposition_time = (float)atof(value.c_str());
+
+		getline(file, value, ',');
+		fstate->enemy_is_invisible = atoi(value.c_str());
+
+		getline(file, value, ',');
+		fstate->enemy_is_shooting = atoi(value.c_str());
+
+		getline(file, value, ',');
+		fstate->enemy_weapon = atoi(value.c_str());
+		////////////////////
+
+		//// Goal Info////
+		getline(file, value, ',');
+		fstate->goal_flags = atoi(value.c_str());
+
+		getline(file, value, ',');
+		fstate->item_type = atoi(value.c_str());
+		//////////////////
+
+		//// Exit Information ////
+		getline(file, value, ',');
+		fstate->last_enemy_area_exits = atoi(value.c_str());
+
+		getline(file, value, ',');
+		fstate->goal_area_exits = atoi(value.c_str());
+
+		getline(file, value, ',');
+		fstate->current_area_exits = atoi(value.c_str());
+		//////////////////////////
+		
+		//// Area Numbers ////
+		getline(file, value, ',');
+		fstate->current_area_num = atoi(value.c_str());
+
+		getline(file, value, ',');
+		fstate->goal_area_num = atoi(value.c_str());
+
+		getline(file, value, ',');
+		fstate->enemy_area_num = atoi(value.c_str());
+		//////////////////////////
+
+		//// Misc ////
+		getline(file, value, ',');
+		fstate->tfl = atoi(value.c_str());
+
+		getline(file, value, '\n');
+		fstate->last_hit_count = atoi(value.c_str());
+		//////////////
+
+		/***** END READING FINAL STATE *****/
+
+		samples.insert(it, s);
+		it = samples.end();
+	}
+	file.close();
+
+	LspiAgent<host_vector<float>> agent(samples, DISCOUNT);
+
+	// Write to file
+	ofstream outfile("lspi.pol");
+	for(int i = 0; i < agent.w.size(); i++)
+	{
+		if(i + 1 == agent.w.size())
+		{
+			outfile << fixed << setprecision(8) << agent.w[i] << endl;
+		}
+		else
+		{
+			outfile << fixed << setprecision(8) << agent.w[i] << ",";
+		}
+	}
+	outfile.close();
+
+	// Free space used by samples
+	for(int i = 0; i < samples.size(); i++)
+	{
+		free(samples[i].final_state);
+		free(samples[i].state);
+	}
+}
+
+/*
+ * When Pendulum is not defined instead we are running tests against the Quake samples.
+ * All we do is parse the samples and then write out the policy.
+ */
+int _tmain(int, _TCHAR*)
+{
+	LARGE_INTEGER li, before, after;
+	double frequency;
+	
+	if(!QueryPerformanceFrequency(&li))
+	{
+		cout << "Failed to query performance frequency.";
+	}
+	else
+	{
+		frequency = li.QuadPart;
+	}
+
+	QueryPerformanceCounter(&before);
+	updatePolicy();
+	QueryPerformanceCounter(&after);
+
+	// Calculate the time it took and save it to perf.dat
+	double policy_update_time = (double)(after.QuadPart - before.QuadPart)/frequency;
+
+	FILE* perfFile = fopen("perf.dat", "w");
+	fprintf(perfFile, "Average Policy Update Time: %f\n", 1000.0*(policy_update_time));
+	fclose(perfFile);
+
+	cout << "Done!";
+
+	getch();
+
+	return 0;
+}
+
+#endif

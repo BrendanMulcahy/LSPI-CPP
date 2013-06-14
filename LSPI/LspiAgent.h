@@ -16,8 +16,13 @@
 #include "Matrix.h"
 #include <thrust\host_vector.h>
 
-#define NUM_ACTIONS 3
-#define BASIS_SIZE 4
+#ifdef PENDULUM
+#	define NUM_ACTIONS 3
+#	define BASIS_SIZE 4
+#else
+#	define NUM_ACTIONS 6
+#	define BASIS_SIZE 5
+#endif
 #define SIGMA_2 1
 
 //#define VERBOSE_HIGH
@@ -45,6 +50,8 @@ template <typename vector_type>
 class LspiAgent: public Agent
 {
 	public:
+		vector_type w;
+
 		/**
 		 * To create an LSPI Agent, a discount factor and a large number of sample data points are required. More sample should result in a better policy.
 		 * The samples should come from data taken from an agent performing at random, or a previous iteration of an LSPI Agent.
@@ -111,6 +118,7 @@ class LspiAgent: public Agent
 			w = policy;
 		}
 
+#ifdef PENDULUM
 		/**
 		 * After creation, the LSPI Agent's policy is used to generate a functional value at a given angle and velocity. This functional value defines the action
 		 * the agent intends to take.
@@ -134,10 +142,58 @@ class LspiAgent: public Agent
 
 			return action;
 		}
+#else
+		int getAction(lspi_action_basis_t *state)
+		{
+			int action = -1;
+			float max = -9e999;
+			int i, j;
+
+			if(state->enemy == -1)
+			{
+				// Only #1 and #2 are valid options
+				i = 1;
+				j = 3;
+			}
+			else
+			{
+				// #3, 4, 5, 6 are valid
+				i = 3;
+				j = 7;
+			}
+			
+			for(i; i < j; i++)
+			{
+				vector_type params = basis_function(state, i);
+				float q; 
+				dot(params, w, q);
+				if(q > max)
+				{
+					action = i;
+					max = q;
+				}
+			}
+
+			return action;
+		}
+#endif
 
 	private:
 		float discount;
-		vector_type w;
+
+		/** 
+		 * Calculates the reward earned for a given (s,a,s') tuple.
+		 */
+		float calculateReward(sample s)
+		{
+			float r_health = 0.01 * (float)(s.final_state->health_diff);
+			float r_hit = 0.5 * (float)(s.final_state->hit_count_diff);
+			float r_armor = 0.005 * (float)(s.final_state->armor_diff);
+			float r_kill = 2 * (float)(s.final_state->kill_diff);
+			float r_death = -2 * (float)(s.final_state->death_diff);
+
+			return r_health + r_hit + r_armor + r_kill + r_death - 0.001;
+		}
 		
 		// TODO: Test the speed penalty of copying samples to the GPU for gpu based implementation
 		/**
@@ -170,10 +226,16 @@ class LspiAgent: public Agent
 
 			for(unsigned int i = 0; i < samples.size(); i++)
 			{
+#ifdef PENDULUM
 				// Get the basis functions
 				vector_type phi = basis_function(samples[i].angle, samples[i].angular_velocity, (int)(samples[i].action));
 				int next_action = getAction(samples[i].final_angle, samples[i].final_angular_velocity);
 				vector_type phi_prime = basis_function(samples[i].final_angle, samples[i].final_angular_velocity, next_action);
+#else
+				vector_type phi = basis_function(samples[i].state, samples[i].action);
+				int next_action = getAction(samples[i].final_state);
+				vector_type phi_prime = basis_function(samples[i].final_state, next_action);
+#endif
 
 				// Break the calculation into smaller parts
 				scal(phi_prime, discount);
@@ -221,7 +283,12 @@ class LspiAgent: public Agent
 #endif
 
 				// Update values
+#ifdef PENDULUM
 				scal(phi, (float)samples[i].reward);
+#else
+				float reward = calculateReward(samples[i]);
+				scal(phi, reward);
+#endif
 				axpy(phi, b);
 				
 #if defined(VERBOSE_HIGH)
@@ -246,7 +313,8 @@ class LspiAgent: public Agent
 
 			return b;
 		}
-	
+
+#ifdef PENDULUM
 		/**
 		 * Returns the policy function weights for the given angle, velocity, and action.
 		 * These weights can be used to compute the estimated fitness of the given action.
@@ -289,5 +357,33 @@ class LspiAgent: public Agent
 
 			return phi;
 		}
+#else
+		vector_type basis_function(lspi_action_basis_t *state, int action)
+		{
+			vector_type phi(BASIS_SIZE*NUM_ACTIONS);
+			thrust::fill(phi.begin(), phi.end(), 0.0f);
+			
+#if defined(VERBOSE_HIGH)
+			PRINT(phi);
+#endif
+
+			// TODO: Move this into a transform/cuda kernel
+			// Now populate the basis function for this state action pair
+			// Note that each entry except for the first is a gaussian.
+			int i = BASIS_SIZE * (action-1);
+			phi[i] = 1.0f;
+			
+			phi[i+1] = state->stat_health;
+			phi[i+2] = state->stat_armor;
+			phi[i+3] = state->enemy;
+			phi[i+4] = state->enemy_line_dist;
+
+#if defined(VERBOSE_HIGH)
+			PRINT(phi);
+#endif
+
+			return phi;
+		}
+#endif
 };
 
