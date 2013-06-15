@@ -21,7 +21,7 @@
 #	define BASIS_SIZE 4
 #else
 #	define NUM_ACTIONS 6
-#	define BASIS_SIZE 29
+#	define BASIS_SIZE 67
 #endif
 #define SIGMA_2 1
 
@@ -35,6 +35,33 @@
 #elif defined(VERBOSE_MED)
 #	define VERBOSE_LOW
 #endif
+
+// Travel flags
+#define TFL_WALK				0x00000002	//walking
+#define TFL_CROUCH				0x00000004	//crouching
+#define TFL_BARRIERJUMP			0x00000008	//jumping onto a barrier
+#define TFL_JUMP				0x00000010	//jumping
+#define TFL_LADDER				0x00000020	//climbing a ladder
+#define TFL_WALKOFFLEDGE		0x00000080	//walking of a ledge
+#define TFL_SWIM				0x00000100	//swimming
+#define TFL_WATERJUMP			0x00000200	//jumping out of the water
+#define TFL_TELEPORT			0x00000400	//teleporting
+#define TFL_ELEVATOR			0x00000800	//elevator
+#define TFL_ROCKETJUMP			0x00001000	//rocket jumping
+#define TFL_BFGJUMP				0x00002000	//bfg jumping
+#define TFL_GRAPPLEHOOK			0x00004000	//grappling hook
+#define TFL_DOUBLEJUMP			0x00008000	//double jump
+#define TFL_RAMPJUMP			0x00010000	//ramp jump
+#define TFL_STRAFEJUMP			0x00020000	//strafe jump
+#define TFL_JUMPPAD				0x00040000	//jump pad
+#define TFL_AIR					0x00080000	//travel through air
+#define TFL_WATER				0x00100000	//travel through water
+#define TFL_SLIME				0x00200000	//travel through slime
+#define TFL_LAVA				0x00400000	//travel through lava
+#define TFL_DONOTENTER			0x00800000	//travel through donotenter area
+#define TFL_FUNCBOB				0x01000000	//func bobbing
+#define TFL_FLIGHT				0x02000000	//flight
+#define TFL_BRIDGE				0x04000000	//move over a bridge
 
 #define PRINT(X) do															\
 	{																		\
@@ -443,6 +470,50 @@ class LspiAgent: public Agent
 			phi[i+26] = state->enemy_area_num;
 			phi[i+27] = state->current_area_num;
 			phi[i+28] = state->goal_area_num;
+
+			// Ammo information
+			phi[i+29] = state->wp_gauntlet;
+			phi[i+30] = state->wp_machinegun;
+			phi[i+31] = state->wp_shotgun;
+			phi[i+32] = state->wp_grenade_launcher;
+			phi[i+33] = state->wp_rocket_launcher;
+			phi[i+34] = state->wp_lightning;
+			phi[i+35] = state->wp_railgun;
+			phi[i+36] = state->wp_plasmagun;
+			phi[i+37] = state->wp_bfg;
+			phi[i+38] = state->wp_grappling_hook;
+
+			// Shared location information
+			phi[i+39] = state->enemy_area_num == state->goal_area_num ? 1 : 0;
+			phi[i+40] = state->enemy_area_num == state->current_area_num ? 1 : 0;
+			phi[i+41] = state->goal_area_num == state->current_area_num ? 1 : 0;
+			phi[i+42] = phi[i+41] == phi[i+40] ? 1 : 0;
+			
+			// Travel flags
+			phi[i+43] = state->tfl & TFL_WALK;
+			phi[i+44] = state->tfl & TFL_CROUCH;
+			phi[i+45] = state->tfl & TFL_BARRIERJUMP;
+			phi[i+46] = state->tfl & TFL_JUMP;
+			phi[i+47] = state->tfl & TFL_LADDER;
+			phi[i+48] = state->tfl & TFL_WALKOFFLEDGE;
+			phi[i+49] = state->tfl & TFL_SWIM;
+			phi[i+50] = state->tfl & TFL_WATERJUMP;
+			phi[i+51] = state->tfl & TFL_TELEPORT;
+			phi[i+52] = state->tfl & TFL_ELEVATOR;
+			phi[i+53] = state->tfl & TFL_WALK;
+			phi[i+54] = state->tfl & TFL_ROCKETJUMP;
+			phi[i+55] = state->tfl & TFL_BFGJUMP;
+			phi[i+56] = state->tfl & TFL_GRAPPLEHOOK;
+			phi[i+57] = state->tfl & TFL_DOUBLEJUMP;
+			phi[i+58] = state->tfl & TFL_RAMPJUMP;
+			phi[i+59] = state->tfl & TFL_STRAFEJUMP;
+			phi[i+60] = state->tfl & TFL_JUMPPAD;
+			phi[i+61] = state->tfl & TFL_AIR;
+			phi[i+62] = state->tfl & TFL_WATER;
+			phi[i+63] = state->tfl & TFL_SLIME;
+			phi[i+64] = state->tfl & TFL_LAVA;
+			phi[i+65] = state->tfl & TFL_FLIGHT;
+			phi[i+66] = state->tfl & TFL_BRIDGE;
 
 #if defined(VERBOSE_HIGH)
 			PRINT(phi);
