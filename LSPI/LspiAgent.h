@@ -21,7 +21,7 @@
 #	define BASIS_SIZE 4
 #else
 #	define NUM_ACTIONS 6
-#	define BASIS_SIZE 67
+#	define BASIS_SIZE 43
 #endif
 #define SIGMA_2 1
 
@@ -488,32 +488,6 @@ class LspiAgent: public Agent
 			phi[i+40] = state->enemy_area_num == state->current_area_num ? 1 : 0;
 			phi[i+41] = state->goal_area_num == state->current_area_num ? 1 : 0;
 			phi[i+42] = phi[i+41] == phi[i+40] ? 1 : 0;
-			
-			// Travel flags
-			phi[i+43] = state->tfl & TFL_WALK;
-			phi[i+44] = state->tfl & TFL_CROUCH;
-			phi[i+45] = state->tfl & TFL_BARRIERJUMP;
-			phi[i+46] = state->tfl & TFL_JUMP;
-			phi[i+47] = state->tfl & TFL_LADDER;
-			phi[i+48] = state->tfl & TFL_WALKOFFLEDGE;
-			phi[i+49] = state->tfl & TFL_SWIM;
-			phi[i+50] = state->tfl & TFL_WATERJUMP;
-			phi[i+51] = state->tfl & TFL_TELEPORT;
-			phi[i+52] = state->tfl & TFL_ELEVATOR;
-			phi[i+53] = state->tfl & TFL_WALK;
-			phi[i+54] = state->tfl & TFL_ROCKETJUMP;
-			phi[i+55] = state->tfl & TFL_BFGJUMP;
-			phi[i+56] = state->tfl & TFL_GRAPPLEHOOK;
-			phi[i+57] = state->tfl & TFL_DOUBLEJUMP;
-			phi[i+58] = state->tfl & TFL_RAMPJUMP;
-			phi[i+59] = state->tfl & TFL_STRAFEJUMP;
-			phi[i+60] = state->tfl & TFL_JUMPPAD;
-			phi[i+61] = state->tfl & TFL_AIR;
-			phi[i+62] = state->tfl & TFL_WATER;
-			phi[i+63] = state->tfl & TFL_SLIME;
-			phi[i+64] = state->tfl & TFL_LAVA;
-			phi[i+65] = state->tfl & TFL_FLIGHT;
-			phi[i+66] = state->tfl & TFL_BRIDGE;
 
 #if defined(VERBOSE_HIGH)
 			PRINT(phi);
