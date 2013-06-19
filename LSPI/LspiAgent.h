@@ -693,7 +693,7 @@ class LspiAgent: public Agent
 //			return phi;
 //		}
 
-// MEDIUM-SMALL BASIS FUNCTION (6*19)
+// MEDIUM-SMALL BASIS FUNCTION (6*20)
 		vector_type basis_function(lspi_action_basis_t *state, int action)
 		{
 			vector_type phi(BASIS_SIZE*NUM_ACTIONS);
