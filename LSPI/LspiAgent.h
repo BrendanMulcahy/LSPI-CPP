@@ -20,7 +20,13 @@
 
 #ifdef PENDULUM
 #	define NUM_ACTIONS 3
-#	define BASIS_SIZE 4
+#	define ANGLE_COMP 3
+#	define ACC_COMP 3
+#	define BASIS_SIZE (ANGLE_COMP*ACC_COMP + 1)
+#	define ANGLE_LIMIT (CUDART_PI_F/4.0f)
+#	define ANGLE_STEP ((2.0f * ANGLE_LIMIT)/(ANGLE_COMP - 1.0f))
+#	define ACC_LIMIT 1
+#	define ACC_STEP ((2.0f * ACC_LIMIT)/(ACC_COMP - 1.0f))
 #else
 #	define NUM_ACTIONS 6
 #	define BASIS_SIZE 43
@@ -96,6 +102,22 @@ class LspiAgent: public Agent
 		 */
 		LspiAgent(thrust::host_vector<sample> samples, float disc) : discount(disc), w(BASIS_SIZE*NUM_ACTIONS)
 		{
+#ifdef PENDULUM
+			basis_angle[0] = -ANGLE_LIMIT;
+			basis_angle[ANGLE_COMP-1] = ANGLE_LIMIT;
+			for(int i = 1; i < ANGLE_COMP-1; i++)
+			{
+				basis_angle[i] = -ANGLE_LIMIT + i*ANGLE_STEP;
+			}
+
+			basis_acc[0] = -ACC_LIMIT;
+			basis_acc[ACC_COMP-1] = ACC_LIMIT;
+			for(int i = 1; i < ACC_COMP-1; i++)
+			{
+				basis_acc[i] = -ACC_LIMIT + i*ACC_STEP;
+			}
+#endif
+
 			thrust::fill(w.begin(), w.end(), 0.0f);
 
 			// Loop until policy converges
@@ -346,6 +368,9 @@ class LspiAgent: public Agent
 		}
 
 #ifdef PENDULUM
+		float basis_angle[ANGLE_COMP];
+		float basis_acc[ACC_COMP];
+
 		/**
 		 * Returns the policy function weights for the given angle, velocity, and action.
 		 * These weights can be used to compute the estimated fitness of the given action.
@@ -360,7 +385,7 @@ class LspiAgent: public Agent
 #endif
 
 			// If we're horizontal then the basis function is all 0s
-			if (fabs(x) - CUDART_PI_F/(2.0f) >= 0)
+			if (fabs(x) - ANGLE_LIMIT >= 0)
 			{
 				return phi;
 			}
@@ -371,12 +396,11 @@ class LspiAgent: public Agent
 			int i = BASIS_SIZE * (action-1);
 			phi[i] = 1.0f;
 			i += 1;
-			float value = CUDART_PI_F/4.0f;
-			for(float j = -value; j <= value; j += (value/((BASIS_SIZE-1)/6.0) + 0.0001))
+			for(int j = 0; j < ANGLE_COMP; j++)
 			{
-				for(float k = -1; k <= 1; k += 1)
+				for(int k = 0; k < ACC_COMP; k++)
 				{
-					float dist = (x - j)*(x - j) + (v - k)*(v - k);
+					float dist = (x - basis_angle[j])*(x - basis_angle[j]) + (v - basis_acc[k])*(v - basis_acc[k]);
 					phi[i] = exp(-dist/(2*SIGMA_2));
 					i += 1;
 				}
