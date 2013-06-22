@@ -20,10 +20,10 @@
 
 #ifdef PENDULUM
 #	define NUM_ACTIONS 3
-#	define ANGLE_COMP 3
-#	define ACC_COMP 3
+#	define ANGLE_COMP 2
+#	define ACC_COMP 2
 #	define BASIS_SIZE (ANGLE_COMP*ACC_COMP + 1)
-#	define ANGLE_LIMIT (CUDART_PI_F/4.0f)
+#	define ANGLE_LIMIT (CUDART_PI_F/2.0f)
 #	define ANGLE_STEP ((2.0f * ANGLE_LIMIT)/(ANGLE_COMP - 1.0f))
 #	define ACC_LIMIT 1
 #	define ACC_STEP ((2.0f * ACC_LIMIT)/(ACC_COMP - 1.0f))
@@ -289,6 +289,10 @@ class LspiAgent: public Agent
 				int next_action = getAction(samples[i].final_state);
 				vector_type phi_prime = basis_function(samples[i].final_state, next_action);
 #endif
+#if defined(VERBOSE_HIGH)
+ 				PRINT(phi);
+				PRINT(phi_prime);
+#endif
 
 				// Break the calculation into smaller parts
 				scal(phi_prime, discount);
@@ -337,7 +341,8 @@ class LspiAgent: public Agent
 
 				// Update values
 #ifdef PENDULUM
-				scal(phi, (float)samples[i].reward);
+				float reward = samples[i].reward;
+				scal(phi, reward);
 #else
 				float reward = calculateReward(samples[i]);
 				scal(phi, reward);
