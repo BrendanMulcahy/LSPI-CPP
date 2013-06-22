@@ -5,6 +5,9 @@
  * Tracks the performance of each type of agent across multiple trials and prints the results.
  */
 
+ 
+#define PENDULUM
+
 #include "stdafx.h"
 #include "Agent.h"
 #include "LspiAgent.h"
@@ -31,8 +34,8 @@
 using namespace std;
 
 #define DT_CONST 0.1f
-#define NUM_TRIALS 100
-#define NUM_SAMPLE_TRIALS 100
+#define NUM_TRIALS 1000
+#define NUM_SAMPLE_TRIALS 100000
 #define DISCOUNT 0.95f
 
 //#define TEST_FIRST
