@@ -27,7 +27,7 @@
 #include <stdlib.h>
 #include <fstream>
 //#include "GradientAgent.h"
-#include "QuakeDefs.h"
+//#include "QuakeDefs.h"
 #include <iomanip>
 
 
@@ -35,21 +35,11 @@ using namespace std;
 
 #define DT_CONST 0.1f
 #define NUM_TRIALS 1000
-#define NUM_SAMPLE_TRIALS 100000
+#define NUM_SAMPLE_TRIALS 1000
 #define DISCOUNT 0.95f
 
 //#define TEST_FIRST
 //#define USE_FILE // If defined, samples will be pulled from a file titled samples.txt instead of from randomly generated input
-
-/**
- * Calculates the time between the two clock events. Currently is not working as expected.
- */
-double diffclock(clock_t clock1,clock_t clock2)
-{
-	double diffticks= clock2-clock1;
-	double diffms=(diffticks*10)/CLOCKS_PER_SEC;
-	return diffms;
-}
 
 #ifdef PENDULUM
 inline void getSamplesFromFile(string filename, thrust::host_vector<sample>& samples)
@@ -102,7 +92,7 @@ int _tmain(int, _TCHAR*)
 		return -1;
 	}
 
-	printf("%d", NUM_SAMPLE_TRIALS);
+	printf("Sample Trials: %d\n", NUM_SAMPLE_TRIALS);
 	srand((unsigned int)time(NULL));
 	int random_agent_life = 0;
 	int clever_agent_life = 0;
@@ -150,11 +140,21 @@ int _tmain(int, _TCHAR*)
 	}
 #endif
 
-	clock_t start = clock();
+	printf("Samples collected: %d\n", samples.size());
+
+	LARGE_INTEGER li, before, after;
+	__int64 frequency;
+	
+	if(QueryPerformanceFrequency(&li))
+	{
+		frequency = li.QuadPart;
+	}
+
+	QueryPerformanceCounter(&before);
 	LspiAgent<host_vector<float>> lspi_agent(samples, DISCOUNT);
 //	LspiAgent<device_vector<float>> lspi_agent(samples, DISCOUNT); 
-	clock_t end = clock();
-	printf("Single-threaded: %f\n", diffclock(start, end));
+	QueryPerformanceCounter(&after);
+	printf("Single-threaded: %f\n", (double)(after.QuadPart - before.QuadPart)/frequency);
 
 	for(int i = 0; i < NUM_TRIALS; i++)
 	{
@@ -209,6 +209,15 @@ int _tmain(int, _TCHAR*)
 	printf("Clever Agent: %f\n", (double)(clever_agent_life*DT_CONST)/NUM_TRIALS);
 	printf("No-Op Agent: %f\n", (double)(noop_agent_life*DT_CONST)/NUM_TRIALS);
 	printf("LSPI Agent: %f\n", (double)(lspi_agent_life*DT_CONST)/NUM_TRIALS);
+
+	ofstream outfile;
+
+	outfile.open("results.dat");
+		outfile << "Random Agent: " << fixed << setprecision(8) << (double)(random_agent_life*DT_CONST)/NUM_TRIALS << endl;
+		outfile << "Clever Agent: " << fixed << setprecision(8) << (double)(clever_agent_life*DT_CONST)/NUM_TRIALS << endl;
+		outfile << "No-Op Agent: " << fixed << setprecision(8) << (double)(noop_agent_life*DT_CONST)/NUM_TRIALS << endl;
+		outfile << "LSPI Agent: " << fixed << setprecision(8) << (double)(lspi_agent_life*DT_CONST)/NUM_TRIALS << endl;
+	outfile.close();
 
 	// Wait so we can get the results
 	getch();
